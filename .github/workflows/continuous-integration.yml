@@ -1,0 +1,38 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Continuous Integration"
+
+on:
+  push:
+    paths:
+      - "**.ts"
+  pull_request:
+    paths:
+      - "**.ts"
+
+jobs:
+  Integration:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        deno: ["1.0.5"]
+
+    name: "Deno ${{ matrix.deno }} Test on ${{ matrix.os }} OS"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: "Set up Deno v${{ matrix.deno }}"
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: "Deno Version"
+        run: deno --version
+
+      - name: "Run deno tests"
+        run: deno test ./test.ts

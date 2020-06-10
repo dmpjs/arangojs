@@ -1,0 +1,38 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Coding Standard"
+
+on:
+  push:
+    paths:
+      - "**.ts"
+  pull_request:
+    paths:
+      - "**.ts"
+
+jobs:
+  CodingStandard:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        deno: ["1.0.5"]
+
+    name: "Deno ${{ matrix.deno }} lint on ${{ matrix.operating-system }} OS"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: "Set up Deno v${{ matrix.deno }}"
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: "Deno Version"
+        run: deno --version
+
+      - name: "lint code"
+        run: deno test ./test.ts
