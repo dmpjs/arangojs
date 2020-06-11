@@ -16,8 +16,7 @@ module.exports = {
               "version.ts",
             ],
             "from": 'const VERSION = ".*"',
-            "to":
-              'const VERSION = "${nextRelease.version}"',
+            "to": 'const VERSION = "${nextRelease.version}"',
             "results": [
               {
                 "file": "version.ts",

@@ -1,0 +1,9 @@
+version: '2.0'
+services:
+  database:
+    image: arangodb/arangodb:3.6.4
+    restart: always
+    environment:
+      ARANGO_ROOT_PASSWORD: secret
+    ports:
+      - "8529:8529"
