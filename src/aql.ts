@@ -1,8 +1,4 @@
 /**
- * ```js
- * import { aql } from "arangojs/aql";
- * ```
- *
  * The "aql" module provides the {@link aql} template string handler and
  * helper functions, as well as associated types and interfaces for TypeScript.
  *
@@ -11,7 +7,7 @@
  * @packageDocumentation
  */
 import { ArangoCollection, isArangoCollection } from "./collection.ts";
-import { Dict } from "../types/dict.ts";
+import { Dict } from "./types/dict.ts";
 
 /**
  * Generic AQL query object consisting of an AQL query string and its bind

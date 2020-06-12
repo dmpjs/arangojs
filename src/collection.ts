@@ -1,11 +1,4 @@
 /**
- * ```ts
- * import type {
- *   DocumentCollection,
- *   EdgeCollection,
- * } from "arangojs/collection";
- * ```
- *
  * The "collection" module provides collection related types and interfaces
  * for TypeScript.
  *
@@ -39,13 +32,13 @@ import {
   PersistentIndex,
   SkiplistIndex,
   TtlIndex,
-  _indexHandle,
-} from "./indexes.ts";
+} from "./types/indexes.ts";
 import {
   ERROR_ARANGO_COLLECTION_NOT_FOUND,
   ERROR_ARANGO_DOCUMENT_NOT_FOUND,
 } from "./error_codes.ts";
-import { Patch } from "../types/patch.ts";
+import { Patch } from "./types/patch.ts";
+import {_indexHandle} from './indexes.ts';
 
 /**
  * Indicates whether the given value represents an {@link ArangoCollection}.

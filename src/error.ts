@@ -1,8 +1,4 @@
 /**
- * ```ts
- * import type { ArangoError } from "arangojs/error";
- * ```
- *
  * TODO
  *
  * @packageDocumentation

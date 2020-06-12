@@ -1,23 +1,19 @@
 /**
- * ```ts
- * import type { Config } from "arangojs/connection";
- * ```
- *
  * The "connection" module provides connection and configuration related types
  * for TypeScript.
  *
  * @packageDocumentation
  */
-import { Querystring } from "../lib/querystring.ts";
+import { Querystring } from "./lib/querystring.ts";
 import { Database } from "./database.ts";
 import { ArangoError, HttpError, isSystemError } from "./error.ts";
-import { Errback } from "../types/errback.ts";
+import { Errback } from "./types/errback.ts";
 import {
   ArangojsResponse,
   RequestFunction,
-} from "../types/request.ts";
-import { createRequest } from "../lib/create_request.ts";
-import { sanitizeUrl } from "../lib/sanitize_url.ts";
+} from "./types/request.ts";
+import { createRequest } from "./lib/create_request.ts";
+import { sanitizeUrl } from "./lib/sanitize_url.ts";
 
 const MIME_JSON = /\/(json|javascript)(\W|$)/;
 const LEADER_ENDPOINT_HEADER = "x-arango-endpoint";

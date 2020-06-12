@@ -1,8 +1,4 @@
 /**
- * ```ts
- * import type { Analyzer } from "arangojs/analyzer";
- * ```
- *
  * TODO
  *
  * @packageDocumentation

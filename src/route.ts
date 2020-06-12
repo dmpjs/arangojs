@@ -1,15 +1,11 @@
 /**
- * ```ts
- * import type { Route } from "arangojs/route";
- * ```
- *
  * TODO
  *
  * @packageDocumentation
  */
 import { Headers, Params } from "./connection.ts";
 import { Database } from "./database.ts";
-import { ArangojsResponse } from "../types/request.ts";
+import { ArangojsResponse } from "./types/request.ts";
 
 /**
  * TODO

@@ -1,8 +1,4 @@
 /**
- * ```js
- * import { Database } from "arangojs/database";
- * ```
- *
  * The "database" module provides the {@link Database} class and associated
  * types and interfaces for TypeScript.
  *
@@ -41,10 +37,10 @@ import {
   GraphCreateOptions,
   GraphInfo,
 } from "./graph.ts";
-import { toForm } from "../lib/multipart.ts";
+import { toForm } from "./lib/multipart.ts";
 import { Route } from "./route.ts";
 import { Transaction } from "./transaction.ts";
-import { FoxxManifest } from "../types/foxx-manifest.ts";
+import { FoxxManifest } from "./types/foxx-manifest.ts";
 import {
   ArangoSearchView,
   ArangoSearchViewPropertiesOptions,
@@ -53,8 +49,8 @@ import {
   ViewType,
 } from "./view.ts";
 import { ERROR_ARANGO_DATABASE_NOT_FOUND } from "./error_codes.ts";
-import { Dict } from "../types/dict.ts";
-import { ArangojsResponse } from "../types/request.ts";
+import { Dict } from "./types/dict.ts";
+import { ArangojsResponse } from "./types/request.ts";
 
 function colToString(collection: string | ArangoCollection): string {
   if (isArangoCollection(collection)) {

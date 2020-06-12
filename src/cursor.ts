@@ -1,14 +1,10 @@
 /**
- * ```ts
- * import type { ArrayCursor } from "arangojs/cursor";
- * ```
- *
  * The "cursor" module provides the {@link ArrayCursor} type for TypeScript.
  *
  * @packageDocumentation
  */
 import { Database } from "./database.ts";
-import { Dict } from "../types/dict.ts";
+import { Dict } from "./types/dict.ts";
 
 /**
  * Additional information about the cursor.

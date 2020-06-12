@@ -1,8 +1,4 @@
 /**
- * ```ts
- * import type { ArangoSearchView } from "arangojs/view";
- * ```
- *
  * The "view" module provides View related types and interfaces for TypeScript.
  *
  * @packageDocumentation
@@ -11,7 +7,7 @@ import { ArangoResponseMetadata } from "./connection.ts";
 import { Database } from "./database.ts";
 import { isArangoError } from "./error.ts";
 import { ERROR_ARANGO_COLLECTION_NOT_FOUND } from "./error_codes.ts";
-import { Dict } from "../types/dict.ts";
+import { Dict } from "./types/dict.ts";
 
 /**
  * String values indicating the View type.

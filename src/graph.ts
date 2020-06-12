@@ -1,12 +1,4 @@
 /**
- * ```ts
- * import type {
- *   Graph,
- *   GraphVertexCollection,
- *   GraphEdgeCollection,
- * } from "arangojs/graph";
- * ```
- *
  * TODO
  *
  * @packageDocumentation
@@ -34,7 +26,7 @@ import {
   ERROR_ARANGO_DOCUMENT_NOT_FOUND,
   ERROR_GRAPH_NOT_FOUND,
 } from "./error_codes.ts";
-import { Patch } from "../types/patch.ts";
+import { Patch } from "./types/patch.ts";
 
 const mungeGharialResponse = (
   body: any,

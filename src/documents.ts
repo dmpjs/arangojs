@@ -1,8 +1,4 @@
 /**
- * ```ts
- * import type { Document, Edge } from "arangojs/document";
- * ```
- *
  * TODO
  *
  * @packageDocumentation
