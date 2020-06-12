@@ -9,6 +9,15 @@
  */
 const messages: { [key: number]: string } = {
   0: "Network Error",
+  300: "Multiple Choices",
+  301: "Moved Permanently",
+  302: "Found",
+  303: "See Other",
+  304: "Not Modified",
+  305: "Use Proxy",
+  306: "Switch Proxy",
+  307: "Temporary Redirect",
+  308: "Permanent Redirect",
   400: "Bad Request",
   401: "Unauthorized",
   402: "Payment Required",
@@ -108,15 +117,21 @@ export class ArangoError extends Error {
    */
   constructor(response: any) {
     super();
+
     this.response = response;
     this.statusCode = response.statusCode;
     this.message = response.body.errorMessage;
     this.errorNum = response.body.errorNum;
     this.code = response.body.code;
+
     const err = new Error(this.message);
+
     err.name = this.name;
+
     for (const key of nativeErrorKeys) {
-      if (err[key]) this[key] = err[key]!;
+      if (err[key]) {
+        (this as any)[key] = err[key] as string;
+      }
     }
   }
 
@@ -155,7 +170,9 @@ export class HttpError extends Error {
     err.name = this.name;
 
     for (const key of nativeErrorKeys) {
-      if (err[key]) this[key] = err[key]!;
+      if (err[key]) {
+        this[key] = err[key] as string;
+      }
     }
   }
 }

@@ -19,10 +19,15 @@ const omit = <T>(obj: T, keys: (keyof T)[]): T => {
 
 export function createRequest(baseUrl: string, agentOptions: any) {
   const u = new URL(baseUrl);
-  const { username = "root", password = "", ...baseUrlParts } = u;
+  const { username, password, ...baseUrlParts } = u;
 
-  u.username = "";
-  u.password = "";
+  if (!username) {
+    u.username = "root";
+  }
+
+  if (!password) {
+    u.password = "";
+  }
 
   const options = omit(agentOptions, ["maxSockets"]);
 
@@ -51,21 +56,20 @@ export function createRequest(baseUrl: string, agentOptions: any) {
 
     if (!headers["authorization"]) {
       headers["authorization"] = `Basic ${
-        btoa(unescape(encodeURIComponent(`${username}:${password}`)))
+        btoa(unescape(encodeURIComponent(`${u.username}:${u.password}`)))
       }`;
     }
 
     const payload = {
       ...options,
       url: u.href,
-      responseType: expectBinary ? "blob" : "text",
-      body,
+      data: body,
       method,
       headers,
       timeout,
     };
 
-    const req = makeFetch(payload)
+    makeFetch(payload)
       .then((res: ArangojsResponse) => {
         if (!res.data) {
           res.data = "";
@@ -75,7 +79,7 @@ export function createRequest(baseUrl: string, agentOptions: any) {
       }).catch((err: ArangojsError) => {
         const error = err;
         // @ts-ignore
-        error.request = req;
+        error.request = payload;
 
         cb(error);
       });
@@ -88,6 +92,7 @@ const makeFetch = async ({
   method = "get",
   headers,
   data,
+  keepAlive,
   timeout = 0,
 }: ArangojsRequest): Promise<ArangojsResponse> => {
   // Url and Base url
@@ -98,7 +103,11 @@ const makeFetch = async ({
   method = method.toLowerCase().trim();
 
   // Create fetch Request Config
-  const fetchRequestObject: RequestInit = {};
+  const fetchRequestObject: RequestInit = {
+    credentials: "include",
+    keepalive: keepAlive,
+    mode: "cors",
+  };
 
   // Add method to Request Config
   if (method !== "get") {
@@ -112,6 +121,7 @@ const makeFetch = async ({
     } else {
       try {
         fetchRequestObject.body = JSON.stringify(data);
+
         if (!headers) {
           headers = {};
         }
@@ -125,16 +135,40 @@ const makeFetch = async ({
   // Add headers to Request Config
   if (headers) {
     const _headers: Headers = new Headers();
+
     Object.keys(headers).forEach((header) => {
       if (headers && headers[header]) {
         _headers.set(header, headers[header]);
       }
     });
+
     fetchRequestObject.headers = _headers;
   }
 
+  // Remove commented test when Abort is supported by Deno
+  // https://github.com/denoland/deno/issues/5471
+  // https://github.com/Code-Hex/deno-context/issues/8
+  // Timeout
+  // const controller = new AbortController();
+  // fetchRequestObject.signal = controller.signal;
+
+  // let timeoutVar: number = 0;
+  //
+  // if ((timeout || 0) > 0) {
+  //   timeoutVar = setTimeout(() => {
+  //     timeoutVar = 0;
+  //     console.log("Cancecled controller.abort()");
+  //     controller.abort();
+  //   }, timeout);
+  // }
+
   return fetch(url, fetchRequestObject)
     .then(async (x) => {
+      // // Clear timeout
+      // if (timeoutVar) {
+      //   clearTimeout(timeoutVar);
+      // }
+
       const _status: number = x.status;
 
       Object.assign(x, { data: null });
@@ -144,6 +178,7 @@ const makeFetch = async ({
       } else {
         const error = {
           response: x as ArangojsResponse,
+          message: await x.text(),
         };
 
         return Promise.reject(error);

@@ -20,10 +20,8 @@ export type ArangojsRequest = {
   headers?: {
     [key: string]: any;
   };
-  params?: {
-    [key: string]: string | number | boolean;
-  };
   timeout?: number;
+  keepAlive: boolean;
 };
 
 export type ArangojsResponse = Response & {

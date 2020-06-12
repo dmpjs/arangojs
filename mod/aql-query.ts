@@ -4,4 +4,4 @@ export {
   GeneratedAqlQuery,
   AqlLiteral,
   AqlValue,
-} from "./../src/aql-query.ts";
+} from "../src/aql.ts";

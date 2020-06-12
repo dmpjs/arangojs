@@ -672,7 +672,7 @@ export class Connection {
    *
    * Performs a request using the arangojs connection pool.
    */
-  request<T = ArangojsResponse>(
+  public request<T = ArangojsResponse>(
     {
       host,
       method = "GET",
@@ -687,22 +687,19 @@ export class Connection {
     transform?: (res: ArangojsResponse) => T,
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      let contentType = "text/plain";
-
-      if (isBinary) {
-        contentType = "application/octet-stream";
-      } else if (body) {
-        if (typeof body === "object") {
-          body = JSON.stringify(body);
-          contentType = "application/json";
-        } else {
-          body = String(body);
-        }
-      }
+      // if (isBinary) {
+      //   contentType = "application/octet-stream";
+      // } else if (body) {
+      //   if (typeof body === "object") {
+      //     body = JSON.stringify(body);
+      //     contentType = "application/json";
+      //   } else {
+      //     body = String(body);
+      //   }
+      // }
 
       const extraHeaders: Headers = {
         ...this._headers,
-        "content-type": contentType,
         "x-arango-version": String(this._arangoVersion),
       };
 
@@ -720,7 +717,7 @@ export class Connection {
           timeout,
           method,
           expectBinary,
-          body,
+          body
         },
         reject,
         resolve: async (res: ArangojsResponse) => {
@@ -756,7 +753,7 @@ export class Connection {
             parsedBody.hasOwnProperty("errorNum")
           ) {
             reject(new ArangoError({ ...res, data: parsedBody }));
-          } else if (res.status && res.status >= 400) {
+          } else if (res.status && res.status >= 300) {
             reject(new HttpError({ ...res, data: parsedBody }));
           } else {
             if (!expectBinary) {
