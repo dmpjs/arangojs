@@ -1,3 +1,10 @@
+## [1.0.0-alpha.2](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2020-06-14)
+
+
+### Bug Fixes
+
+* fixed description on the module ([6b0b09c](https://github.com/dmpjs/arangojs/commit/6b0b09c309d36e685e9cc178bba1accad35a4702))
+
 ## 1.0.0-alpha.1 (2020-06-14)
 
 
