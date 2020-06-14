@@ -1,3 +1,10 @@
+## [1.0.0-alpha.4](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.3...v1.0.0-alpha.4) (2020-06-14)
+
+
+### Features
+
+* added function for connection in database ([e53959c](https://github.com/dmpjs/arangojs/commit/e53959cf83b1eff825f9454f8e27fedbbc808dee))
+
 ## [1.0.0-alpha.3](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2020-06-14)
 
 
