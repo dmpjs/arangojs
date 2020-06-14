@@ -1,3 +1,10 @@
+## [1.0.0-alpha.3](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2020-06-14)
+
+
+### Bug Fixes
+
+* license file path ([d28932d](https://github.com/dmpjs/arangojs/commit/d28932ddddc1b9ab8e5f8c5361d0851b007556ef))
+
 ## [1.0.0-alpha.2](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2020-06-14)
 
 
