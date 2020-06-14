@@ -17,7 +17,7 @@ jobs:
         os: [ubuntu-latest]
         deno: ["1.0.5"]
 
-    name: "Deno ${{ matrix.deno }} lint on ${{ matrix.operating-system }} OS"
+    name: "Deno ${{ matrix.deno }} lint"
 
     runs-on: ${{ matrix.os }}
 
