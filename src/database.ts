@@ -1016,6 +1016,10 @@ export class Database {
     }
   }
 
+  get connection (): Connection {
+    return this._connection
+  }
+
   //#region misc
   /**
    * @internal

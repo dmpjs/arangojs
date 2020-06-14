@@ -453,6 +453,7 @@ export class Connection {
       host = task.host;
     } else if (task.allowDirtyRead) {
       host = this._activeDirtyHost;
+
       this._activeDirtyHost = (this._activeDirtyHost + 1) % this._hosts.length;
 
       task.options.headers["x-arango-allow-dirty-read"] = "true";
@@ -484,6 +485,7 @@ export class Connection {
           err.code === "ECONNREFUSED"
         ) {
           task.retries += 1;
+
           this._queue.push(task);
         } else {
           task.reject(err);
@@ -701,21 +703,15 @@ export class Connection {
     transform?: (res: ArangojsResponse) => T,
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      // if (isBinary) {
-      //   contentType = "application/octet-stream";
-      // } else if (body) {
-      //   if (typeof body === "object") {
-      //     body = JSON.stringify(body);
-      //     contentType = "application/json";
-      //   } else {
-      //     body = String(body);
-      //   }
-      // }
-
       const extraHeaders: Headers = {
         ...this._headers,
         "x-arango-version": String(this._arangoVersion),
       };
+
+      if (isBinary) {
+        extraHeaders["Accept"] = "application/octet-stream";
+        extraHeaders["Content-Type"] = "application/octet-stream";
+      }
 
       if (this._transactionId) {
         extraHeaders["x-arango-trx-id"] = this._transactionId;
