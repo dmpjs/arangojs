@@ -43,10 +43,11 @@ module.exports = {
       {
         "assets": [
           "version.ts",
-          "mod.ts",
+          "mod/*",
           "src/*",
           "UPGRADE.md",
           "LICENSE.md",
+          "LICENSE_MIT.md",
           "CHANGELOG.md",
         ],
       },

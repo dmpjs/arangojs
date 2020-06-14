@@ -68,8 +68,8 @@ Please have a look at [`CODE_OF_CONDUCT.md`](.github/CODE_OF_CONDUCT.md).
 
 This work is dual-licensed under Apache 2.0 and MIT
 
-Please have a look at [`LICENSE.md`](LICENSE.md).
+Please have a look at [`LICENSE_MIT.md`](LICENSE_MIT.md).
 
 > Some files inside this package are licensed using the Apache License, Version 2.0.
 
-Please have a look at [`LICENSE_APACHE.md`](LICENSE.md).
+Please have a look at [`LICENSE_APACHE.md`](LICENSE_MIT.md).

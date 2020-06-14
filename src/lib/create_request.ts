@@ -3,7 +3,7 @@
  *
  * (c) Daniel Bannert <d.bannert@anolilab.de>
  *
- * For the full copyright and license information, please view the LICENSE.md
+ * For the full copyright and license information, please view the LICENSE_MIT.md
  * file that was distributed with this source code.
  */
 
