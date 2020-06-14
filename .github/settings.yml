@@ -93,15 +93,15 @@ repository:
   archived: false
   default_branch: master
   delete_branch_on_merge: true
-  description: "Provides a GitHub repository template for a deno module, using GitHub actions."
+  description: "ArangoJS is based on the official ArangoJS and has been ported to Deno, on top of the deno fetch."
   has_downloads: true
   has_issues: true
   has_pages: false
   has_projects: false
   has_wiki: false
-  name: "deno-module-template"
+  name: "arangojs"
   private: false
 
   # https://developer.github.com/v3/repos/branches/#remove-branch-protection
 
-  topics: "deno, module, library, template, dmpjs, linux, macos, windows"
+  topics: "deno, module, library, dmpjs, arangodb, database, nosql, driver"

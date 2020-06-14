@@ -14,7 +14,7 @@
     </a>
 </p>
 
-ArangoJS bassed on official [ArangoJS](https://github.com/arangodb/arangojs) and has been ported for use on Deno, on top of the deno fetch.
+ArangoJS is based on the official [ArangoJS](https://github.com/arangodb/arangojs) and has been ported to Deno, on top of the deno fetch.
 
 ## Installation
 
