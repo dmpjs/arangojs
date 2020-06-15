@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2020 Daniel Bannert
  */
 
 /**
@@ -37,7 +39,6 @@ import {
   EdgeData,
   _documentHandle,
 } from "./documents.ts";
-import { isArangoError } from "./error.ts";
 import {
   ERROR_ARANGO_DOCUMENT_NOT_FOUND,
   ERROR_GRAPH_NOT_FOUND,
@@ -234,7 +235,7 @@ export class GraphVertexCollection<T extends object = any>
       return await result;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
       ) {
         return null;
       }
@@ -515,7 +516,7 @@ export class GraphEdgeCollection<T extends object = any>
       return await result;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
       ) {
         return null;
       }
@@ -810,7 +811,7 @@ export class Graph {
       await this.get();
       return true;
     } catch (err) {
-      if (isArangoError(err) && err.errorNum === ERROR_GRAPH_NOT_FOUND) {
+      if (err.errorNum === ERROR_GRAPH_NOT_FOUND) {
         return false;
       }
 

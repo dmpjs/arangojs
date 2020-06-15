@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2020 Daniel Bannert
  */
 
 /**
@@ -21,7 +23,6 @@
  */
 import { Connection } from "./connection.ts";
 import { Database } from "./database.ts";
-import { isArangoError } from "./error.ts";
 import { ERROR_BAD_PARAMETER } from "./error_codes.ts";
 
 /**
@@ -83,7 +84,7 @@ export class Transaction {
       await this.get();
       return true;
     } catch (err) {
-      if (isArangoError(err) && err.errorNum === ERROR_BAD_PARAMETER) {
+      if (err.errorNum === ERROR_BAD_PARAMETER) {
         return false;
       }
       throw err;

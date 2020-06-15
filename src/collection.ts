@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2020 Daniel Bannert
  */
 
 /**
@@ -32,7 +34,6 @@ import {
   EdgeData,
   _documentHandle,
 } from "./documents.ts";
-import { isArangoError } from "./error.ts";
 import {
   EnsureFulltextIndexOptions,
   EnsureGeoIndexOptions,
@@ -120,14 +121,6 @@ export type ShardingStrategy =
   | "community-compat"
   | "enterprise-compat"
   | "enterprise-smart-edge-compat";
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryAllKeys = "id" | "key" | "path";
 
 /**
  * TODO
@@ -1200,66 +1193,6 @@ export type CollectionEdgesResult<T extends object = any> = {
      */
     filtered: number;
   };
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryRemoveByExampleResult = {
-  /**
-   * TODO
-   */
-  deleted: number;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryReplaceByExampleResult = {
-  /**
-   * TODO
-   */
-  replaced: number;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryUpdateByExampleResult = {
-  /**
-   * TODO
-   */
-  updated: number;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryRemoveByKeysResult<T extends object = any> = {
-  /**
-   * TODO
-   */
-  removed: number;
-  /**
-   * TODO
-   */
-  ignored: number;
-  /**
-   * TODO
-   */
-  old?: DocumentMetadata[] | Document<T>[];
 };
 
 // Collections
@@ -2848,10 +2781,11 @@ export class Collection<T extends object = any>
       return true;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_COLLECTION_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_COLLECTION_NOT_FOUND
       ) {
         return false;
       }
+
       throw err;
     }
   }
@@ -2943,6 +2877,7 @@ export class Collection<T extends object = any>
 
   async loadIndexes() {
     const body = await this._put<{ result: boolean }>("loadIndexesIntoMemory");
+
     return body.result;
   }
 
@@ -2952,12 +2887,15 @@ export class Collection<T extends object = any>
 
   async rename(newName: string) {
     const result = await this._db.renameCollection(this._name, newName);
+
     this._name = newName;
+
     return result;
   }
 
   async rotate() {
     const body = await this._put<{ result: boolean }>("rotate");
+
     return body.result;
   }
 
@@ -3017,6 +2955,7 @@ export class Collection<T extends object = any>
     if (typeof options === "boolean") {
       options = { graceful: options };
     }
+
     const { allowDirtyRead = undefined, graceful = false } = options;
     const result = this._db.request(
       {
@@ -3025,12 +2964,16 @@ export class Collection<T extends object = any>
       },
       (res) => res.data,
     );
-    if (!graceful) return result;
+
+    if (!graceful) {
+      return result;
+    }
+
     try {
       return await result;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_DOCUMENT_NOT_FOUND
       ) {
         return null;
       }
@@ -3218,163 +3161,6 @@ export class Collection<T extends object = any>
   }
   //#endregion
 
-  //#region simple queries
-  list(type: SimpleQueryAllKeys = "id") {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/all-keys",
-        body: { type, collection: this._name },
-      },
-      (res) => new ArrayCursor(this._db, res.data, res.arangojsHostId),
-    );
-  }
-
-  all(options?: SimpleQueryAllOptions) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/all",
-        body: {
-          ...options,
-          collection: this._name,
-        },
-      },
-      (res) => new ArrayCursor(this._db, res.data, res.arangojsHostId),
-    );
-  }
-
-  any() {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/any",
-        body: { collection: this._name },
-      },
-      (res) => res.data.document,
-    );
-  }
-
-  byExample(
-    example: Partial<DocumentData<T>>,
-    options?: SimpleQueryByExampleOptions,
-  ) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/by-example",
-        body: {
-          ...options,
-          example,
-          collection: this._name,
-        },
-      },
-      (res) => new ArrayCursor(this._db, res.data, res.arangojsHostId),
-    );
-  }
-
-  firstExample(example: Partial<DocumentData<T>>) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/first-example",
-        body: {
-          example,
-          collection: this._name,
-        },
-      },
-      (res) => res.data.document,
-    );
-  }
-
-  removeByExample(
-    example: Partial<DocumentData<T>>,
-    options?: SimpleQueryRemoveByExampleOptions,
-  ) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/remove-by-example",
-        body: {
-          ...options,
-          example,
-          collection: this._name,
-        },
-      },
-      (res) => res.data,
-    );
-  }
-
-  replaceByExample(
-    example: Partial<DocumentData<T>>,
-    newData: DocumentData<T>,
-    options?: SimpleQueryReplaceByExampleOptions,
-  ) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/replace-by-example",
-        body: {
-          ...options,
-          example,
-          newData,
-          collection: this._name,
-        },
-      },
-      (res) => res.data,
-    );
-  }
-
-  updateByExample(
-    example: Partial<DocumentData<T>>,
-    newData: Patch<DocumentData<T>>,
-    options?: SimpleQueryUpdateByExampleOptions,
-  ) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/update-by-example",
-        body: {
-          ...options,
-          example,
-          newData,
-          collection: this._name,
-        },
-      },
-      (res) => res.data,
-    );
-  }
-
-  lookupByKeys(keys: string[]) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/lookup-by-keys",
-        body: {
-          keys,
-          collection: this._name,
-        },
-      },
-      (res) => res.data.documents,
-    );
-  }
-
-  removeByKeys(keys: string[], options?: SimpleQueryRemoveByKeysOptions) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/remove-by-keys",
-        body: {
-          options: options,
-          keys,
-          collection: this._name,
-        },
-      },
-      (res) => res.data,
-    );
-  }
-  //#endregion
-
   //#region indexes
   indexes() {
     return this._db.request(
@@ -3420,27 +3206,6 @@ export class Collection<T extends object = any>
         path: `/_api/index/${_indexHandle(selector, this._name)}`,
       },
       (res) => res.data,
-    );
-  }
-
-  fulltext(
-    attribute: string,
-    query: string,
-    { index, ...options }: SimpleQueryFulltextOptions = {},
-  ) {
-    return this._db.request(
-      {
-        method: "PUT",
-        path: "/_api/simple/fulltext",
-        body: {
-          ...options,
-          index: index ? _indexHandle(index, this._name) : undefined,
-          attribute,
-          query,
-          collection: this._name,
-        },
-      },
-      (res) => new ArrayCursor(this._db, res.data, res.arangojsHostId),
     );
   }
   //#endregion

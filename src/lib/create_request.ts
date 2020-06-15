@@ -86,8 +86,8 @@ export function createRequest(baseUrl: string, agentOptions: any) {
 
         cb(null, res);
       }).catch((err: ArangojsError) => {
-        const error = err;
-        // @ts-ignore
+        const error = err as ArangojsError;
+
         error.request = payload;
 
         cb(error);
@@ -185,12 +185,7 @@ const makeFetch = async ({
       if (_status >= 200 && _status < 300) {
         return Promise.resolve(x as ArangojsResponse);
       } else {
-        const error = {
-          response: x as ArangojsResponse,
-          message: await x.text(),
-        };
-
-        return Promise.reject(error);
+        return Promise.reject(await x.json());
       }
     });
 };

@@ -48,7 +48,6 @@ import {
   RequestOptions,
 } from "./connection.ts";
 import { ArrayCursor } from "./cursor.ts";
-import { isArangoError } from "./error.ts";
 import {
   EdgeDefinition,
   Graph,
@@ -1016,8 +1015,8 @@ export class Database {
     }
   }
 
-  get connection (): Connection {
-    return this._connection
+  get connection(): Connection {
+    return this._connection;
   }
 
   //#region misc
@@ -1318,7 +1317,7 @@ export class Database {
       return true;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_DATABASE_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_DATABASE_NOT_FOUND
       ) {
         return false;
       }

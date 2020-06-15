@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) 2020 Daniel Bannert
  */
 
 /**
@@ -21,7 +23,6 @@
  */
 import { ArangoResponseMetadata } from "./connection.ts";
 import { Database } from "./database.ts";
-import { isArangoError } from "./error.ts";
 import { ERROR_ARANGO_COLLECTION_NOT_FOUND } from "./error_codes.ts";
 import { Dict } from "./types/dict.ts";
 
@@ -354,7 +355,7 @@ export class View<
       return true;
     } catch (err) {
       if (
-        isArangoError(err) && err.errorNum === ERROR_ARANGO_COLLECTION_NOT_FOUND
+        err.errorNum === ERROR_ARANGO_COLLECTION_NOT_FOUND
       ) {
         return false;
       }

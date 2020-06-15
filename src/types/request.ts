@@ -48,7 +48,6 @@ export type ArangojsResponse = Response & {
 };
 
 export type ArangojsError = Error & {
-  response: ArangojsResponse;
   request: Request;
 };
 
