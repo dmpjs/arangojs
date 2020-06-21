@@ -1,3 +1,10 @@
+## [1.0.0-alpha.6](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.5...v1.0.0-alpha.6) (2020-06-21)
+
+
+### Bug Fixes
+
+* change always the method string to upper case ([bb604e5](https://github.com/dmpjs/arangojs/commit/bb604e56328e0424d3314035b092f46037a544a8))
+
 ## [1.0.0-alpha.5](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.4...v1.0.0-alpha.5) (2020-06-15)
 
 
