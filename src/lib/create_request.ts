@@ -98,7 +98,7 @@ export function createRequest(baseUrl: string, agentOptions: any) {
 const makeFetch = async ({
   url = "/",
   baseURL,
-  method = "get",
+  method = "GET",
   headers,
   data,
   keepAlive,
@@ -119,12 +119,10 @@ const makeFetch = async ({
   };
 
   // Add method to Request Config
-  if (method !== "get") {
-    fetchRequestObject.method = method.toUpperCase();
-  }
+  fetchRequestObject.method = method.toUpperCase();
 
   // Add body to Request Config
-  if (data && method !== "get") {
+  if (data && method !== "GET") {
     if (typeof data === "string" || data instanceof FormData) {
       fetchRequestObject.body = data;
     } else {
