@@ -1,3 +1,10 @@
+## [1.0.0-alpha.7](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.6...v1.0.0-alpha.7) (2020-06-24)
+
+
+### Bug Fixes
+
+* removed deprecated functions ([843011b](https://github.com/dmpjs/arangojs/commit/843011b5439b85d799409a18b3ec36a395cd9bfb))
+
 ## [1.0.0-alpha.6](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.5...v1.0.0-alpha.6) (2020-06-21)
 
 
