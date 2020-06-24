@@ -144,20 +144,6 @@ export type TransactionOptions = {
    * (RocksDB only.) Determines the transaction size limit in bytes.
    */
   maxTransactionSize?: number;
-  /**
-   * (RocksDB only.) Determines the maximum number of operations after which an
-   * intermediate commit is performed automatically.
-   *
-   * @deprecated Removed in ArangoDB 3.4.
-   */
-  intermediateCommitCount?: number;
-  /**
-   * (RocksDB only.) Determine the maximum total size of operations after which
-   * an intermediate commit is performed automatically.
-   *
-   * @deprecated Removed in ArangoDB 3.4.
-   */
-  intermediateCommitSize?: number;
 };
 
 /**
@@ -522,13 +508,6 @@ export type CreateDatabaseOptions = {
    * database.
    */
   writeConcern?: number;
-  /**
-   * (Cluster only.) Default write concern for new collections created in this
-   * database.
-   *
-   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
-   */
-  minReplicationFactor?: number;
 };
 
 /**
@@ -544,10 +523,6 @@ export type DatabaseInfo = {
   sharding?: "" | "flexible" | "single";
   replicationFactor?: "satellite" | number;
   writeConcern?: number;
-  /**
-   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
-   */
-  minReplicationFactor?: number;
 };
 
 /**
@@ -1178,25 +1153,6 @@ export class Database {
     this._connection.close();
   }
   //#endregion
-
-  //#region auth
-  /**
-   * Updates the `Database` instance and its connection string to use the given
-   * `databaseName`, then returns itself.
-   *
-   * **Note**: This also affects all collections, cursors and other arangojs
-   * objects originating from this database object, which may cause unexpected
-   * results.
-   *
-   * @param databaseName - Name of the database to use.
-   *
-   * @deprecated Use {@link Database.database} instead.
-   */
-  useDatabase(databaseName: string): this {
-    this._connection.database(this._name, null);
-    this._name = databaseName;
-    return this;
-  }
 
   /**
    * Updates the `Database` instance's `authorization` header to use Basic

@@ -700,11 +700,6 @@ export type GraphInfo = {
   replicationFactor?: number;
   writeConcern?: number;
 
-  /**
-   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
-   */
-  minReplicationFactor?: number;
-
   // Extra options
   /** Enterprise Edition only */
   isSatellite?: boolean;
@@ -745,12 +740,6 @@ export type GraphCreateOptions = {
    * (Cluster only.) Write concern for new collections in the graph.
    */
   writeConcern?: number;
-  /**
-   * (Cluster only.) Write concern for new collections in the graph.
-   *
-   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
-   */
-  minReplicationFactor?: number;
 
   // Extra options
   /**
@@ -1019,51 +1008,6 @@ export class Graph {
         },
       },
       (res) => res.data.graph,
-    );
-  }
-
-  /**
-   * Performs a traversal starting from the given `startVertex` and following
-   * edges contained in this graph.
-   *
-   * See also {@link EdgeCollection.traversal}.
-   *
-   * @param startVertex - Document `_id` of a vertex in this graph.
-   * @param options - Options for performing the traversal.
-   *
-   * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
-   * replaced with AQL queries.
-   *
-   * @example
-   * ```js
-   * const db = new Database();
-   * const graph = db.graph("my-graph");
-   * const collection = graph.edgeCollection("edges").collection;
-   * await collection.import([
-   *   ["_key", "_from", "_to"],
-   *   ["x", "vertices/a", "vertices/b"],
-   *   ["y", "vertices/b", "vertices/c"],
-   *   ["z", "vertices/c", "vertices/d"],
-   * ]);
-   * const result = await graph.traversal("vertices/a", {
-   *   direction: "outbound",
-   *   init: "result.vertices = [];",
-   *   visitor: "result.vertices.push(vertex._key);",
-   * });
-   * console.log(result.vertices); // ["a", "b", "c", "d"]
-   */
-  traversal(startVertex: string, options?: TraversalOptions): Promise<any> {
-    return this._db.request(
-      {
-        method: "POST",
-        path: `/_api/traversal`,
-        body: {
-          ...options,
-          startVertex,
-          graphName: this._name,
-        },
-      },
-      (res) => res.data.result,
     );
   }
 }

@@ -694,298 +694,6 @@ export type CollectionImportOptions = {
   details?: boolean;
 };
 
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryByExampleOptions = {
-  /**
-   * TODO
-   */
-  skip?: number;
-  /**
-   * TODO
-   */
-  limit?: number;
-  /**
-   * TODO
-   */
-  batchSize?: number;
-  /**
-   * TODO
-   */
-  ttl?: number;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryAllOptions = {
-  /**
-   * TODO
-   */
-  skip?: number;
-  /**
-   * TODO
-   */
-  limit?: number;
-  /**
-   * TODO
-   */
-  batchSize?: number;
-  /**
-   * TODO
-   */
-  ttl?: number;
-  /**
-   * TODO
-   */
-  stream?: boolean;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryUpdateByExampleOptions = {
-  /**
-   * TODO
-   */
-  keepNull?: boolean;
-  /**
-   * TODO
-   */
-  waitForSync?: boolean;
-  /**
-   * TODO
-   */
-  limit?: number;
-  /**
-   * TODO
-   */
-  mergeObjects?: boolean;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryRemoveByExampleOptions = {
-  /**
-   * TODO
-   */
-  waitForSync?: boolean;
-  /**
-   * TODO
-   */
-  limit?: number;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryReplaceByExampleOptions =
-  SimpleQueryRemoveByExampleOptions;
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryRemoveByKeysOptions = {
-  /**
-   * TODO
-   */
-  returnOld?: boolean;
-  /**
-   * TODO
-   */
-  silent?: boolean;
-  /**
-   * TODO
-   */
-  waitForSync?: boolean;
-};
-
-/**
- * TODO
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type SimpleQueryFulltextOptions = {
-  /**
-   * TODO
-   */
-  index?: string;
-  /**
-   * TODO
-   */
-  limit?: number;
-  /**
-   * TODO
-   */
-  skip?: number;
-};
-
-/**
- * Options for performing a graph traversal.
- *
- * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
- * replaced with AQL queries.
- */
-export type TraversalOptions = {
-  /**
-   * A string evaluating to the body of a JavaScript function to be executed
-   * on the server to initialize the traversal result object.
-   *
-   * The code has access to two variables: `config`, `result`.
-   * The code may modify the `result` object.
-   *
-   * **Note**: This code will be evaluated and executed on the
-   * server inside ArangoDB's embedded JavaScript environment and can not
-   * access any other variables.
-   *
-   * See the official ArangoDB documentation for
-   * {@link https://www.arangodb.com/docs/stable/appendix-java-script-modules-arango-db.html | the JavaScript `@arangodb` module}
-   * for information about accessing the database from within ArangoDB's
-   * server-side JavaScript environment.
-   */
-  init?: string;
-  /**
-   * A string evaluating to the body of a JavaScript function to be executed
-   * on the server to filter nodes.
-   *
-   * The code has access to three variables: `config`, `vertex`, `path`.
-   * The code may include a return statement for the following values:
-   *
-   * * `"exclude"`: The vertex will not be visited.
-   * * `"prune"`: The edges of the vertex will not be followed.
-   * * `""` or `undefined`: The vertex will be visited and its edges followed.
-   * * an array including any of the above values.
-   *
-   * **Note**: This code will be evaluated and executed on the
-   * server inside ArangoDB's embedded JavaScript environment and can not
-   * access any other variables.
-   *
-   * See the official ArangoDB documentation for
-   * {@link https://www.arangodb.com/docs/stable/appendix-java-script-modules-arango-db.html | the JavaScript `@arangodb` module}
-   * for information about accessing the database from within ArangoDB's
-   * server-side JavaScript environment.
-   */
-  filter?: string;
-  /**
-   * A string evaluating to the body of a JavaScript function to be executed
-   * on the server to sort edges if `expander` is not set.
-   *
-   * The code has access to two variables representing edges: `l`, `r`.
-   * The code must return `-1` if `l < r`, `1` if `l > r` or `0` if both
-   * values are equal.
-   *
-   * **Note**: This code will be evaluated and executed on the
-   * server inside ArangoDB's embedded JavaScript environment and can not
-   * access any other variables.
-   *
-   * See the official ArangoDB documentation for
-   * {@link https://www.arangodb.com/docs/stable/appendix-java-script-modules-arango-db.html | the JavaScript `@arangodb` module}
-   * for information about accessing the database from within ArangoDB's
-   * server-side JavaScript environment.
-   */
-  sort?: string;
-  /**
-   * A string evaluating to the body of a JavaScript function to be executed
-   * on the server when a node is visited.
-   *
-   * The code has access to five variables: `config`, `result`, `vertex`,
-   * `path`, `connected`.
-   * The code may modify the `result` object.
-   *
-   * **Note**: This code will be evaluated and executed on the
-   * server inside ArangoDB's embedded JavaScript environment and can not
-   * access any other variables.
-   *
-   * See the official ArangoDB documentation for
-   * {@link https://www.arangodb.com/docs/stable/appendix-java-script-modules-arango-db.html | the JavaScript `@arangodb` module}
-   * for information about accessing the database from within ArangoDB's
-   * server-side JavaScript environment.
-   */
-  visitor?: string;
-  /**
-   * A string evaluating to the body of a JavaScript function to be executed
-   * on the server to use when `direction` is not set.
-   *
-   * The code has access to three variables: `config`, `vertex`, `path`.
-   * The code must return an array of objects with `edge` and `vertex`
-   * attributes representing the connections for the vertex.
-   *
-   * **Note**: This code will be evaluated and executed on the
-   * server inside ArangoDB's embedded JavaScript environment and can not
-   * access any other variables.
-   *
-   * See the official ArangoDB documentation for
-   * {@link https://www.arangodb.com/docs/stable/appendix-java-script-modules-arango-db.html | the JavaScript `@arangodb` module}
-   * for information about accessing the database from within ArangoDB's
-   * server-side JavaScript environment.
-   */
-  expander?: string;
-  /**
-   * Direction of the traversal, relative to the starting vertex if `expander`
-   * is not set.
-   */
-  direction?: "inbound" | "outbound" | "any";
-  /**
-   * Item iteration order.
-   */
-  itemOrder?: "forward" | "backward";
-  /**
-   * Traversal strategy.
-   */
-  strategy?: "depthfirst" | "breadthfirst";
-  /**
-   * Traversal order.
-   */
-  order?: "preorder" | "postorder" | "preorder-expander";
-  /**
-   * Specifies uniqueness for vertices and edges.
-   */
-  uniqueness?: {
-    /**
-     * Uniqueness for vertices.
-     */
-    vertices?: "none" | "global" | "path";
-    /**
-     * Uniqueness for edges.
-     */
-    edges?: "none" | "global" | "path";
-  };
-  /**
-   * If specified, only nodes in at least this depth will be visited.
-   */
-  minDepth?: number;
-  /**
-   * If specified, only nodes in at most this depth will be visited.
-   */
-  maxDepth?: number;
-  /**
-   * Maximum number of iterations before a traversal is aborted because of a
-   * potential endless loop.
-   */
-  maxIterations?: number;
-};
-
 // Results
 
 /**
@@ -2185,6 +1893,7 @@ export interface EdgeCollection<T extends object = any>
     selector: DocumentSelector,
     options?: CollectionReadOptions,
   ): Promise<Edge<T>>;
+
   /**
    * Retrives the document matching the given key or id.
    *
@@ -2221,6 +1930,7 @@ export interface EdgeCollection<T extends object = any>
    * ```
    */
   document(selector: DocumentSelector, graceful: boolean): Promise<Edge<T>>;
+
   /**
    * Inserts a new document with the given `data` into the collection.
    *
@@ -2241,6 +1951,7 @@ export interface EdgeCollection<T extends object = any>
     data: EdgeData<T>,
     options?: CollectionInsertOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T> }>;
+
   /**
    * Inserts new documents with the given `data` into the collection.
    *
@@ -2264,6 +1975,7 @@ export interface EdgeCollection<T extends object = any>
     data: Array<EdgeData<T>>,
     options?: CollectionInsertOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T> }>>;
+
   /**
    * Replaces an existing document in the collection.
    *
@@ -2301,6 +2013,7 @@ export interface EdgeCollection<T extends object = any>
     newData: DocumentData<T>,
     options?: CollectionReplaceOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>;
+
   /**
    * Replaces existing documents in the collection, identified by the `_key` or
    * `_id` of each document.
@@ -2345,6 +2058,7 @@ export interface EdgeCollection<T extends object = any>
     newData: Array<DocumentData<T> & ({ _key: string } | { _id: string })>,
     options?: CollectionReplaceOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>>;
+
   /**
    * Updates an existing document in the collection.
    *
@@ -2381,6 +2095,7 @@ export interface EdgeCollection<T extends object = any>
     newData: Patch<DocumentData<T>>,
     options?: CollectionUpdateOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>;
+
   /**
    * Updates existing documents in the collection, identified by the `_key` or
    * `_id` of each document.
@@ -2420,11 +2135,10 @@ export interface EdgeCollection<T extends object = any>
    * ```
    */
   updateAll(
-    newData: Array<
-      Patch<DocumentData<T>> & ({ _key: string } | { _id: string })
-    >,
+    newData: Array<Patch<DocumentData<T>> & ({ _key: string } | { _id: string })>,
     options?: CollectionUpdateOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>>;
+
   /**
    * Removes an existing document from the collection.
    *
@@ -2448,6 +2162,7 @@ export interface EdgeCollection<T extends object = any>
     selector: DocumentSelector,
     options?: CollectionRemoveOptions,
   ): Promise<DocumentMetadata & { old?: Edge<T> }>;
+
   /**
    * Removes existing documents from the collection.
    *
@@ -2470,6 +2185,7 @@ export interface EdgeCollection<T extends object = any>
     selectors: DocumentSelector[],
     options?: CollectionRemoveOptions,
   ): Promise<Array<DocumentMetadata & { old?: Edge<T> }>>;
+
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2492,6 +2208,7 @@ export interface EdgeCollection<T extends object = any>
     data: EdgeData<T>[],
     options?: CollectionImportOptions,
   ): Promise<CollectionImportResult>;
+
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2517,6 +2234,7 @@ export interface EdgeCollection<T extends object = any>
     data: any[][],
     options?: CollectionImportOptions,
   ): Promise<CollectionImportResult>;
+
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2576,6 +2294,7 @@ export interface EdgeCollection<T extends object = any>
       type?: "documents" | "list" | "auto";
     },
   ): Promise<CollectionImportResult>;
+
   //#endregion
 
   //#region edges
@@ -2606,6 +2325,7 @@ export interface EdgeCollection<T extends object = any>
   edges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
+
   /**
    * Retrieves a list of all incoming edges of the document matching the given
    * `selector`.
@@ -2632,6 +2352,7 @@ export interface EdgeCollection<T extends object = any>
   inEdges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
+
   /**
    * Retrieves a list of all outgoing edges of the document matching the given
    * `selector`.
@@ -2659,46 +2380,6 @@ export interface EdgeCollection<T extends object = any>
   outEdges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
-
-  /**
-   * Performs a traversal starting from the given `startVertex` and following
-   * edges contained in this edge collection.
-   *
-   * Throws an exception when passed a document or `_id` from a different
-   * collection.
-   *
-   * See also {@link Graph.traversal}.
-   *
-   * @param startVertex - Document `_key`, `_id` or object with either of those
-   * properties (e.g. a document from this collection).
-   * @param options - Options for performing the traversal.
-   *
-   * @deprecated Simple Queries have been deprecated in ArangoDB 3.4 and can be
-   * replaced with AQL queries.
-   *
-   * @example
-   * ```js
-   * const db = new Database();
-   * const collection = db.collection("edges");
-   * await collection.import([
-   *   ["_key", "_from", "_to"],
-   *   ["x", "vertices/a", "vertices/b"],
-   *   ["y", "vertices/b", "vertices/c"],
-   *   ["z", "vertices/c", "vertices/d"],
-   * ]);
-   * const result = await collection.traversal("vertices/a", {
-   *   direction: "outbound",
-   *   init: "result.vertices = [];",
-   *   visitor: "result.vertices.push(vertex._key);",
-   * });
-   * console.log(result.vertices); // ["a", "b", "c", "d"]
-   * ```
-   */
-  traversal(
-    startVertex: DocumentSelector,
-    options?: TraversalOptions,
-  ): Promise<any>;
-  //#endregion
 }
 
 /**
@@ -3143,21 +2824,6 @@ export class Collection<T extends object = any>
 
   outEdges(vertex: DocumentSelector) {
     return this._edges(vertex, "out");
-  }
-
-  traversal(startVertex: DocumentSelector, options?: TraversalOptions) {
-    return this._db.request(
-      {
-        method: "POST",
-        path: "/_api/traversal",
-        body: {
-          ...options,
-          startVertex,
-          edgeCollection: this._name,
-        },
-      },
-      (res) => res.data.result,
-    );
   }
   //#endregion
 
