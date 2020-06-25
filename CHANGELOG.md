@@ -1,3 +1,10 @@
+## [1.0.0-alpha.8](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.7...v1.0.0-alpha.8) (2020-06-25)
+
+
+### Bug Fixes
+
+* fixed wrong import of TraversalOptions ([921a670](https://github.com/dmpjs/arangojs/commit/921a6705fe8fde868a4999d0cd44b955c2dcf73c))
+
 ## [1.0.0-alpha.7](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.6...v1.0.0-alpha.7) (2020-06-24)
 
 
