@@ -657,20 +657,24 @@ export type CollectionImportOptions = {
    * (Edge collections only.) Prefix to prepend to `_from` attribute values.
    */
   fromPrefix?: string;
+
   /**
    * (Edge collections only.) Prefix to prepend to `_to` attribute values.
    */
   toPrefix?: string;
+
   /**
    * If set to `true`, the collection is truncated before the data is imported.
    *
    * Default: `false`
    */
   overwrite?: boolean;
+
   /**
    * Whether to wait for the documents to have been synced to disk.
    */
   waitForSync?: boolean;
+
   /**
    * Controls behavior when a unique constraint is violated.
    *
@@ -683,10 +687,12 @@ export type CollectionImportOptions = {
    * Default: `"error"`
    */
   onDuplicate?: "error" | "update" | "replace" | "ignore";
+
   /**
    * If set to `true`, the import will abort if any error occurs.
    */
   complete?: boolean;
+
   /**
    * Whether the response should contain additional details about documents
    * that could not be imported.
@@ -2135,7 +2141,9 @@ export interface EdgeCollection<T extends object = any>
    * ```
    */
   updateAll(
-    newData: Array<Patch<DocumentData<T>> & ({ _key: string } | { _id: string })>,
+    newData: Array<
+      Patch<DocumentData<T>> & ({ _key: string } | { _id: string })
+    >,
     options?: CollectionUpdateOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>>;
 

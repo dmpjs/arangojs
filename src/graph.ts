@@ -26,7 +26,6 @@ import {
   DocumentCollection,
   EdgeCollection,
   isArangoCollection,
-  TraversalOptions,
 } from "./collection.ts";
 import { Headers } from "./connection.ts";
 import { Database } from "./database.ts";
