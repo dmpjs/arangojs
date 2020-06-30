@@ -1,3 +1,10 @@
+## [1.0.0-alpha.9](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.8...v1.0.0-alpha.9) (2020-06-30)
+
+
+### Bug Fixes
+
+* fixed second transformation of a array ([088d6b7](https://github.com/dmpjs/arangojs/commit/088d6b734246fd1529844af0f63bf00ae29cf12d))
+
 ## [1.0.0-alpha.8](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.7...v1.0.0-alpha.8) (2020-06-25)
 
 
