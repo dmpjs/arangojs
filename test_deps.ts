@@ -1,5 +1,1 @@
-export {
-  assertEquals,
-  assertThrows,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.56.0/testing/asserts.ts";
+export { Rhum } from "https://deno.land/x/rhum@v1.0.0/mod.ts";

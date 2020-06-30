@@ -78,13 +78,14 @@ export class ArrayCursor<T = any> {
     allowDirtyRead?: boolean,
   ) {
     this.db = db;
-    this.result = new Array(body.result);
+    this.result = body.result;
     this.id = body.id;
-    this._hasMore = Boolean(body.id && body.hasMore);
     this.host = host;
+    this.allowDirtyRead = allowDirtyRead;
+
+    this._hasMore = Boolean(body.id && body.hasMore);
     this._count = body.count;
     this._extra = body.extra;
-    this.allowDirtyRead = allowDirtyRead;
   }
 
   protected async drain(): Promise<ArrayCursor<T>> {
