@@ -1,3 +1,10 @@
+## [1.0.0-alpha.10](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.9...v1.0.0-alpha.10) (2020-07-15)
+
+
+### Features
+
+* upgraded deno to v1.2.0 ([4afbfb3](https://github.com/dmpjs/arangojs/commit/4afbfb3f1c9942fba3480ea855a8195c8ff4fa46))
+
 ## [1.0.0-alpha.9](https://github.com/dmpjs/arangojs/compare/v1.0.0-alpha.8...v1.0.0-alpha.9) (2020-06-30)
 
 
