@@ -1,5 +1,5 @@
 {
-  "name": "deno-module-template",
+  "name": "arangojs",
   "version": "0.0.0-development",
   "private": true,
   "scripts": {
@@ -26,25 +26,25 @@
     "manualPublishMessage": "This repository is configured to use semantic-release for its releases. Please do not release manually.\n"
   },
   "dependencies": {
-    "@commitlint/cli": "^8.2.0",
-    "@commitlint/config-conventional": "^8.2.0",
-    "@commitlint/core": "^8.2.0",
+    "@commitlint/cli": "^9.1.1",
+    "@commitlint/config-conventional": "^9.1.1",
+    "@commitlint/core": "^9.1.1",
     "@textlint-rule/textlint-rule-no-invalid-control-character": "^1.2.0",
     "@textlint-rule/textlint-rule-no-unmatched-pair": "^1.0.7",
     "@textlint-rule/textlint-rule-preset-google": "^0.1.2",
     "conventional-changelog-conventionalcommits": "^4.3.0",
-    "cz-conventional-changelog": "^3.0.2",
+    "cz-conventional-changelog": "^3.2.0",
     "husky": "^4.2.5",
     "textlint": "^11.6.3",
     "textlint-rule-abbr-within-parentheses": "^1.0.2",
-    "textlint-rule-alex": "^1.3.1",
+    "textlint-rule-alex": "^2.0.0",
     "textlint-rule-apostrophe": "^2.0.0",
     "textlint-rule-common-misspellings": "^1.0.1",
     "textlint-rule-diacritics": "1.0.0",
     "textlint-rule-en-capitalization": "^2.0.2",
     "textlint-rule-footnote-order": "^1.0.3",
     "textlint-rule-helper": "^2.1.1",
-    "textlint-rule-no-dead-link": "^4.6.2",
+    "textlint-rule-no-dead-link": "^4.7.0",
     "textlint-rule-no-empty-section": "^1.1.0",
     "textlint-rule-no-todo": "^2.0.1",
     "textlint-rule-terminology": "^2.1.4",
@@ -53,6 +53,6 @@
   },
   "devDependencies": {
     "minimist": ">=1.2.5",
-    "yargs-parser": ">=18.1.2"
+    "yargs-parser": ">=18.1.3"
   }
 }
