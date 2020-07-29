@@ -55,11 +55,11 @@ export type ViewDescription = {
    */
   id: string;
   /**
-   * The View name.
+   * Name of the View.
    */
   name: string;
   /**
-   * The type of View.
+   * Type of the View.
    */
   type: ViewType;
 };
@@ -125,7 +125,7 @@ export type ArangoSearchViewProperties = {
    */
   writebufferSizeMax: number;
   /**
-   * The consolidation policy to apply for selecting which segments should be
+   * Consolidation policy to apply for selecting which segments should be
    * merged.
    */
   consolidationPolicy: BytesAccumConsolidationPolicy | TierConsolidationPolicy;
@@ -142,7 +142,7 @@ export type ArangoSearchViewProperties = {
  */
 export type BytesAccumConsolidationPolicy = {
   /**
-   * The type of consolidation policy.
+   * Type of consolidation policy.
    */
   type: "bytes_accum";
   /**
@@ -157,18 +157,18 @@ export type BytesAccumConsolidationPolicy = {
  */
 export type TierConsolidationPolicy = {
   /**
-   * The type of consolidation policy.
+   * Type of consolidation policy.
    */
   type: "tier";
   /**
-   * The minimum number of segments that will be evaluated as candidates
+   * Minimum number of segments that will be evaluated as candidates
    * for consolidation.
    *
    * Default: `1`
    */
   segmentsMin?: number;
   /**
-   * The maximum number of segments that will be evaluated as candidates
+   * Maximum number of segments that will be evaluated as candidates
    * for consolidation.
    *
    * Default: `10`
@@ -235,12 +235,12 @@ export type ArangoSearchViewPropertiesOptions = {
    */
   writebufferSizeMax?: number;
   /**
-   * The consolidation policy to apply for selecting which segments should be
+   * Consolidation policy to apply for selecting which segments should be
    * merged.
    */
   consolidationPolicy?: BytesAccumConsolidationPolicy | TierConsolidationPolicy;
   /**
-   * The attribute path (`field`) for the value of each document that will be
+   * Attribute path (`field`) for the value of each document that will be
    * used for sorting.
    *
    * If `direction` is set to `"asc"` or `asc` is set to `true`,
@@ -252,26 +252,26 @@ export type ArangoSearchViewPropertiesOptions = {
   primarySort?: (
     | {
       /**
-         * The attribute path for the value of each document to use for
-         * sorting.
-         */
+     * Attribute path for the value of each document to use for
+     * sorting.
+     */
       field: string;
       /**
-         * If set to `"asc"`, the primary sorting order will be ascending.
-         * If set to `"desc"`, the primary sorting order will be descending.
-         */
+     * If set to `"asc"`, the primary sorting order will be ascending.
+     * If set to `"desc"`, the primary sorting order will be descending.
+     */
       direction: "desc" | "asc";
     }
     | {
       /**
-         * The attribute path for the value of each document to use for
-         * sorting.
-         */
+     * Attribute path for the value of each document to use for
+     * sorting.
+     */
       field: string;
       /**
-         * If set to `true`, the primary sorting order will be ascending.
-         * If set to `false`, the primary sorting order will be descending.
-         */
+     * If set to `true`, the primary sorting order will be ascending.
+     * If set to `false`, the primary sorting order will be descending.
+     */
       asc: boolean;
     }
   )[];
@@ -366,7 +366,7 @@ export class View<
   /**
    * Creates a View with the given `options` and the instance's name.
    *
-   * See also {@link Database.createArangoSearchView}.
+   * See also {@link Database.createView}.
    */
   create(
     options?: PropertiesOptions & { type: ViewType },

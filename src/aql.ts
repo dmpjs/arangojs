@@ -24,6 +24,7 @@
  */
 import { ArangoCollection, isArangoCollection } from "./collection.ts";
 import { Dict } from "./types/dict.ts";
+import { isArangoView, View } from "./view.ts";
 
 /**
  * Generic AQL query object consisting of an AQL query string and its bind
@@ -81,6 +82,7 @@ export interface AqlLiteral {
  */
 export type AqlValue =
   | ArangoCollection
+  | View
   | GeneratedAqlQuery
   | AqlLiteral
   | string
@@ -216,13 +218,18 @@ export function aql(
 ): GeneratedAqlQuery {
   const strings = [...templateStrings];
   const bindVars: Dict<any> = {};
-  const bindVals = [];
+  const bindValues = [];
+
   let query = strings[0];
+
   for (let i = 0; i < args.length; i++) {
     const rawValue = args[i];
+
     let value = rawValue;
+
     if (isGeneratedAqlQuery(rawValue)) {
       const src = rawValue._source();
+
       if (src.args.length) {
         query += src.strings[0];
         args.splice(i, 1, ...src.args);
@@ -238,30 +245,42 @@ export function aql(
         args.splice(i, 1);
         strings.splice(i, 2, strings[i] + rawValue.query + strings[i + 1]);
       }
+
       i -= 1;
+
       continue;
     }
+
     if (rawValue === undefined) {
       query += strings[i + 1];
+
       continue;
     }
+
     if (isAqlLiteral(rawValue)) {
       query += `${rawValue.toAQL()}${strings[i + 1]}`;
+
       continue;
     }
-    const index = bindVals.indexOf(rawValue);
+
+    const index = bindValues.indexOf(rawValue);
     const isKnown = index !== -1;
-    let name = `value${isKnown ? index : bindVals.length}`;
-    if (isArangoCollection(rawValue)) {
+
+    let name = `value${isKnown ? index : bindValues.length}`;
+
+    if (isArangoCollection(rawValue) || isArangoView(rawValue)) {
       name = `@${name}`;
       value = rawValue.name;
     }
+
     if (!isKnown) {
-      bindVals.push(rawValue);
+      bindValues.push(rawValue);
       bindVars[name] = value;
     }
+
     query += `@${name}${strings[i + 1]}`;
   }
+
   return {
     query,
     bindVars,

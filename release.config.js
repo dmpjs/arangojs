@@ -27,6 +27,38 @@ module.exports = {
             ],
             "countMatches": true,
           },
+          {
+            "files": [
+              "README.md",
+            ],
+            "from": "/v.*/",
+            "to": "/v${nextRelease.version}/mod.ts",
+            "results": [
+              {
+                "file": "README.md",
+                "hasChanged": true,
+                "numMatches": 2,
+                "numReplacements": 2,
+              },
+            ],
+            "countMatches": true,
+          },
+          {
+            "files": [
+              "README.md",
+            ],
+            "from": "@v.*/",
+            "to": "@v${nextRelease.version}/mod.ts",
+            "results": [
+              {
+                "file": "README.md",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1,
+              },
+            ],
+            "countMatches": true,
+          },
         ],
       },
     ],
@@ -45,6 +77,7 @@ module.exports = {
           "version.ts",
           "mod/*",
           "src/*",
+          "README.md",
           "UPGRADE.md",
           "LICENSE.md",
           "LICENSE_MIT.md",

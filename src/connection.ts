@@ -31,7 +31,9 @@ import {
   RequestFunction,
 } from "./types/request.ts";
 import { createRequest } from "./lib/create_request.ts";
-import { sanitizeUrl } from "./lib/sanitize_url.ts";
+import { normalizeUrl } from "./lib/normalize_url.ts";
+import { LinkedList } from "./../deps.ts";
+import { Dict } from "./types/dict.ts";
 
 const MIME_JSON = /\/(json|javascript)(\W|$)/;
 const LEADER_ENDPOINT_HEADER = "x-arango-endpoint";
@@ -56,17 +58,13 @@ export type LoadBalancingStrategy = "NONE" | "ROUND_ROBIN" | "ONE_RANDOM";
  *
  * Header names should always be lowercase.
  */
-export type Headers = {
-  [key: string]: string;
-};
+export type Headers = Dict<string>;
 
 /**
  * An arbitrary object with scalar values representing query string parameters
  * and their values.
  */
-export type Params = {
-  [key: string]: any;
-};
+export type Params = Dict<any>;
 
 /**
  * Generic properties shared by all ArangoDB HTTP API responses.
@@ -78,7 +76,7 @@ export type ArangoResponseMetadata = {
   error: false;
 
   /**
-   * The response status code, typically `200`.
+   * Response status code, typically `200`.
    */
   code: number;
 };
@@ -102,14 +100,14 @@ function clean<T>(obj: T) {
 /**
  * Credentials for HTTP Basic authentication.
  */
-export type BasicAuth = {
+export type BasicAuthCredentials = {
   /**
-   * The username, e.g. `"root"`.
+   * Username to use for authentication, e.g. `"root"`.
    */
   username: string;
 
   /**
-   * The password. Defaults to an empty string.
+   * Password to use for authentication. Defaults to an empty string.
    */
   password?: string;
 };
@@ -117,17 +115,39 @@ export type BasicAuth = {
 /**
  * Credentials for HTTP Bearer token authentication.
  */
-export type BearerAuth = {
+export type BearerAuthCredentials = {
   /**
-   * The Bearer token.
+   * Bearer token to use for authentication.
    */
   token: string;
 };
 
-function isBearerAuth(auth: any): auth is BearerAuth {
+function isBearerAuth(auth: any): auth is BearerAuthCredentials {
   return auth.hasOwnProperty("token");
 }
 
+/**
+ * @internal
+ * @hidden
+ */
+function generateStackTrace() {
+  let err = new Error();
+
+  if (!err.stack) {
+    try {
+      throw err;
+    } catch (e) {
+      err = e;
+    }
+  }
+
+  return err.stack;
+}
+
+/**
+ * @internal
+ * @hidden
+ */
 type UrlInfo = {
   absolutePath?: boolean;
   basePath?: string;
@@ -207,8 +227,13 @@ export type RequestOptions = {
   qs?: string | Params;
 };
 
+/**
+ * @internal
+ * @hidden
+ */
 type Task = {
   host?: number;
+  stack?: string;
   allowDirtyRead: boolean;
   resolve: Function;
   reject: Function;
@@ -270,7 +295,7 @@ export type Config = {
    *
    * Default: `{ username: "root", password: "" }`
    */
-  auth?: BasicAuth | BearerAuth;
+  auth?: BasicAuthCredentials | BearerAuthCredentials;
   /**
    * Numeric representation of the ArangoDB version the driver should expect.
    * The format is defined as `XYYZZ` where `X` is the major version, `Y` is
@@ -344,6 +369,15 @@ export type Config = {
    * the `auth` configuration option.
    */
   headers?: Headers;
+  /**
+   * If set to `true`, arangojs will generate stack traces every time a request
+   * is initiated and augment the stack traces of any errors it generates.
+   *
+   * **Warning**: This will cause arangojs to generate stack traces in advance
+   * even if the request does not result in an error. Generating stack traces
+   * may negatively impact performance.
+   */
+  precaptureStackTraces?: boolean;
 };
 
 /**
@@ -374,13 +408,14 @@ export class Connection {
   protected _shouldRetry: boolean;
   protected _maxRetries: number;
   protected _maxTasks: number;
-  protected _queue = new Array<Task>();
+  protected _queue = new LinkedList<Task>();
   protected _databases = new Map<string, Database>();
   protected _hosts: RequestFunction[] = [];
   protected _urls: string[] = [];
   protected _activeHost: number;
   protected _activeDirtyHost: number;
   protected _transactionId: string | null = null;
+  protected _precaptureStackTraces: boolean;
 
   /**
    * @internal
@@ -411,6 +446,7 @@ export class Connection {
     this._headers = { ...config.headers };
     this._loadBalancingStrategy = config.loadBalancingStrategy || "NONE";
     this._useFailOver = this._loadBalancingStrategy !== "ROUND_ROBIN";
+    this._precaptureStackTraces = Boolean(config.precaptureStackTraces);
 
     if (config.maxRetries === false) {
       this._shouldRetry = false;
@@ -550,11 +586,11 @@ export class Connection {
     return search ? { pathname, search } : { pathname };
   }
 
-  setBearerAuth(auth: BearerAuth) {
+  setBearerAuth(auth: BearerAuthCredentials) {
     this.setHeader("authorization", `Bearer ${auth.token}`);
   }
 
-  setBasicAuth(auth: BasicAuth) {
+  setBasicAuth(auth: BasicAuthCredentials) {
     this.setHeader(
       "authorization",
       `Basic ${
@@ -625,7 +661,7 @@ export class Connection {
    */
   addToHostList(urls: string | string[]): number[] {
     const cleanUrls = (Array.isArray(urls) ? urls : [urls]).map((url) =>
-      sanitizeUrl(url)
+      normalizeUrl(url)
     );
     const newUrls = cleanUrls.filter((url) => this._urls.indexOf(url) === -1);
 
@@ -646,7 +682,7 @@ export class Connection {
    * within the transaction if possible. Setting the ID manually may cause
    * unexpected behavior.
    *
-   * See {@link Connection.clearTransactionId}.
+   * See also {@link Connection.clearTransactionId}.
    *
    * @param transactionId - ID of the active transaction.
    */
@@ -700,7 +736,7 @@ export class Connection {
    *
    * Performs a request using the arangojs connection pool.
    */
-  public request<T = ArangojsResponse>(
+  request<T = ArangojsResponse>(
     {
       host,
       method = "GET",
@@ -729,7 +765,7 @@ export class Connection {
         extraHeaders["x-arango-trx-id"] = this._transactionId;
       }
 
-      this._queue.push({
+      const task: Task = {
         retries: 0,
         host,
         allowDirtyRead,
@@ -785,8 +821,17 @@ export class Connection {
             resolve(transform ? transform(res) : (res as any));
           }
         },
-      });
+      };
 
+      if (this._precaptureStackTraces) {
+        const stack = generateStackTrace();
+
+        if (stack) {
+          task.stack = `\n${stack.split("\n").slice(4).join("\n")}`;
+        }
+      }
+
+      this._queue.push(task);
       this._runQueue();
     });
   }

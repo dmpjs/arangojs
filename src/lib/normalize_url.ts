@@ -26,7 +26,7 @@
  * @internal
  * @hidden
  */
-export const sanitizeUrl = (url: string): string => {
+export const normalizeUrl = (url: string): string => {
   const raw = url.match(/^(tcp|ssl|tls)((?::|\+).+)/);
 
   if (raw) {

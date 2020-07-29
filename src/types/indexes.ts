@@ -15,18 +15,15 @@
  */
 
 /**
- * The "indexes" module provides index-related types for TypeScript.
- *
- * @packageDocumentation
- */
-
-/**
  * (MMFiles only.) Options for creating a hash index.
  *
  * When using the RocksDB storage engine, this index type behaves identically
  * to {@link EnsurePersistentIndexOptions}.
  */
 export type EnsureHashIndexOptions = {
+  /**
+   * Type of this index.
+   */
   type: "hash";
   /**
    * An array of attribute paths.
@@ -65,6 +62,9 @@ export type EnsureHashIndexOptions = {
  * to {@link EnsurePersistentIndexOptions}.
  */
 export type EnsureSkiplistIndexOptions = {
+  /**
+   * Type of this index.
+   */
   type: "skiplist";
   /**
    * An array of attribute paths.
@@ -100,6 +100,9 @@ export type EnsureSkiplistIndexOptions = {
  * Options for creating a persistent index.
  */
 export type EnsurePersistentIndexOptions = {
+  /**
+   * Type of this index.
+   */
   type: "persistent";
   /**
    * An array of attribute paths.
@@ -132,44 +135,44 @@ export type EnsureGeoIndexOptions =
   | {
     type: "geo";
     /**
-       * If set to `true`, `fields` must be an array containing a single attribute
-       * path and the attribute value must be an array with two values, the first
-       * of which will be interpreted as the longitude and the second of which will
-       * be interpreted as the latitude of the document.
-       *
-       * Default: `false`
-       */
+   * If set to `true`, `fields` must be an array containing a single attribute
+   * path and the attribute value must be an array with two values, the first
+   * of which will be interpreted as the longitude and the second of which will
+   * be interpreted as the latitude of the document.
+   *
+   * Default: `false`
+   */
     geoJson?: false;
     /**
-       * Attribute paths for the document's latitude and longitude values.
-       */
+   * Attribute paths for the document's latitude and longitude values.
+   */
     fields: [string, string];
     /**
-       * A unique name for this index.
-       */
+   * A unique name for this index.
+   */
     name?: string;
   }
   | {
     type: "geo";
     /**
-       * If set to `true`, `fields` must be an array containing a single attribute
-       * path and the attribute value must be an array with two values, the first
-       * of which will be interpreted as the longitude and the second of which will
-       * be interpreted as the latitude of the document.
-       *
-       * Default: `false`
-       */
+   * If set to `true`, `fields` must be an array containing a single attribute
+   * path and the attribute value must be an array with two values, the first
+   * of which will be interpreted as the longitude and the second of which will
+   * be interpreted as the latitude of the document.
+   *
+   * Default: `false`
+   */
     geoJson?: boolean;
     /**
-       * An array containing the attribute path for an array containing two values,
-       * the first of which will be interpreted as the latitude, the second as the
-       * longitude. If `geoJson` is set to `true`, the order is reversed to match
-       * the GeoJSON format.
-       */
+   * An array containing the attribute path for an array containing two values,
+   * the first of which will be interpreted as the latitude, the second as the
+   * longitude. If `geoJson` is set to `true`, the order is reversed to match
+   * the GeoJSON format.
+   */
     fields: [string];
     /**
-       * A unique name for this index.
-       */
+   * A unique name for this index.
+   */
     name?: string;
   };
 
@@ -177,6 +180,9 @@ export type EnsureGeoIndexOptions =
  * Options for creating a fulltext index.
  */
 export type EnsureFulltextIndexOptions = {
+  /**
+   * Type of this index.
+   */
   type: "fulltext";
   /**
    * An array containing exactly one attribute path.
@@ -187,7 +193,7 @@ export type EnsureFulltextIndexOptions = {
    */
   name?: string;
   /**
-   * The minimum character length of words to index.
+   * Minimum character length of words to index.
    */
   minLength?: number;
 };
@@ -196,6 +202,9 @@ export type EnsureFulltextIndexOptions = {
  * Options for creating a TTL index.
  */
 export type EnsureTtlIndexOptions = {
+  /**
+   * Type of this index.
+   */
   type: "ttl";
   /**
    * An array containing exactly one attribute path.

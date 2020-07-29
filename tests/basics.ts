@@ -1,6 +1,6 @@
-import { Rhum } from "./../test_deps.ts"
-import { Database } from '../mod/database.ts';
-import { Connection } from '../src/connection.ts';
+import { Rhum } from "./../test_deps.ts";
+import { Database } from "../mod/database.ts";
+import { Connection } from "../src/connection.ts";
 
 Rhum.testPlan("ArangoJS Deno Basics", () => {
   Rhum.testSuite("Database", () => {
@@ -19,7 +19,7 @@ Rhum.testPlan("ArangoJS Deno Basics", () => {
   Rhum.testSuite("Configuring the driver", () => {
     Rhum.testCase("with a url", () => {
       const url = "https://example.com:9000";
-      const conn = new Connection({url});
+      const conn = new Connection({ url });
 
       // @ts-ignore
       Rhum.asserts.assertEquals([url], conn._urls);
@@ -28,9 +28,9 @@ Rhum.testPlan("ArangoJS Deno Basics", () => {
     Rhum.testCase("with headers", () => {
       const headers = {
         "x-one": "1",
-        "x-two": "2"
+        "x-two": "2",
       };
-      const conn = new Connection({headers});
+      const conn = new Connection({ headers });
 
       // @ts-ignore
       Rhum.asserts.assertEquals(headers, conn._headers);

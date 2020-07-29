@@ -23,7 +23,6 @@
  * @packageDocumentation
  */
 import { ArangoResponseMetadata, Params } from "./connection.ts";
-import { ArrayCursor } from "./cursor.ts";
 import { Database } from "./database.ts";
 import {
   Document,
@@ -56,6 +55,7 @@ import {
 } from "./error_codes.ts";
 import { Patch } from "./types/patch.ts";
 import { _indexHandle } from "./indexes.ts";
+import { Dict } from "./types/dict.ts";
 
 /**
  * Indicates whether the given value represents an {@link ArangoCollection}.
@@ -66,6 +66,20 @@ export function isArangoCollection(
   collection: any,
 ): collection is ArangoCollection {
   return Boolean(collection && collection.isArangoCollection);
+}
+
+/**
+ * Coerces the given collection name or {@link ArangoCollection} object to
+ * a string representing the collection name.
+ *
+ * @param collection - Collection name or {@link ArangoCollection} object.
+ */
+export function collectionToString(
+  collection: string | ArangoCollection,
+): string {
+  if (isArangoCollection(collection)) {
+    return String(collection.name);
+  } else return String(collection);
 }
 
 /**
@@ -108,12 +122,12 @@ export enum CollectionStatus {
 }
 
 /**
- * The type of key generator.
+ * Type of key generator.
  */
 export type KeyGenerator = "traditional" | "autoincrement" | "uuid" | "padded";
 
 /**
- * TODO
+ * Strategy for sharding a collection.
  */
 export type ShardingStrategy =
   | "hash"
@@ -123,7 +137,13 @@ export type ShardingStrategy =
   | "enterprise-smart-edge-compat";
 
 /**
- * TODO
+ * When a validation should be applied.
+ *
+ * * `"none"`: No validation.
+ * * `"new"`: Newly inserted documents are validated.
+ * * `"moderate"`: New and modified documents are validated unless the modified
+ *   document was already invalid.
+ * * `"strict"`: New and modified documents are always validated.
  */
 export type ValidationLevel = "none" | "new" | "moderate" | "strict";
 
@@ -132,7 +152,7 @@ export type ValidationLevel = "none" | "new" | "moderate" | "strict";
  */
 export type CollectionMetadata = {
   /**
-   * The collection name.
+   * Collection name.
    */
   name: string;
   /**
@@ -172,33 +192,33 @@ export type CollectionKeyProperties = {
    */
   increment?: number;
   /**
-   * (Autoincrement only.) The initial offset for the key.
+   * (Autoincrement only.) Initial offset for the key.
    */
   offset?: number;
   /**
-   * The most recent key that has been generated.
+   * Most recent key that has been generated.
    */
   lastValue: number;
 };
 
 /**
- * TODO
+ * Properties for validating documents in a collection.
  */
 export type ValidationProperties = {
   /**
-   * TODO
-   */
-  rule: any;
-  /**
-   * TODO
+   * Type of document validation.
    */
   type: "json";
   /**
-   * TODO
+   * JSON Schema description of the validation schema for documents.
+   */
+  rule: any;
+  /**
+   * When validation should be applied.
    */
   level: ValidationLevel;
   /**
-   * TODO
+   * Message to be used if validation fails.
    */
   message: string;
 };
@@ -221,52 +241,63 @@ export type CollectionProperties = {
    */
   keyOptions: CollectionKeyProperties;
   /**
-   * TODO
+   * Properties for validating documents in the collection.
    */
   validation: ValidationProperties | null;
   /**
-   * (Cluster only.) TODO
+   * (Cluster only.) Write concern for this collection.
    */
   writeConcern: number;
   /**
-   * (Cluster only.) The number of shards of this collection.
+   * (Cluster only.) Write concern for this collection.
+   *
+   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
+   */
+  minReplicationFactor?: number;
+  /**
+   * (Cluster only.) Number of shards of this collection.
    */
   numberOfShards?: number;
   /**
-   * (Cluster only.) The keys of this collection that will be used for
+   * (Cluster only.) Keys of this collection that will be used for
    * sharding.
    */
   shardKeys?: string[];
   /**
-   * (Cluster only.) The collection's replication factor.
+   * (Cluster only.) Replication factor of the collection.
    */
   replicationFactor?: number;
   /**
-   * (Cluster only.) The collection's sharding strategy.
+   * (Cluster only.) Sharding strategy of the collection.
    */
   shardingStrategy?: ShardingStrategy;
   /**
-   * (MMFiles only.) TODO
+   * (MMFiles only.) Whether the collection will be compacted.
    */
   doCompact?: boolean;
   /**
-   * (MMFiles only.) TODO
+   * (MMFiles only.) Maximum size for each journal or datafile in bytes.
    */
   journalSize?: number;
   /**
-   * (MMFiles only.) TODO
+   * (MMFiles only.) Number of buckets into which indexes using hash tables are
+   * split.
    */
   indexBuckets?: number;
   /**
-   * (MMFiles only.) TODO
+   * (MMFiles only.) If set to `true`, the collection will only be kept
+   * in-memory and discarded when unloaded, resulting in full data loss.
    */
   isVolatile?: boolean;
   /**
-   * (Enterprise Edition cluster only.) TODO
+   * (Enterprise Edition cluster only.) If set to a collection name, sharding
+   * of the new collection will follow the rules for that collection. As long
+   * as the new collection exists, the indicated collection can not be dropped.
    */
   distributeShardsLike?: string;
   /**
-   * (Enterprise Edition cluster only.) TODO
+   * (Enterprise Edition cluster only.) Attribute containing the shard key
+   * value of the referred-to smart join collection.
    */
   smartJoinAttribute?: string;
 };
@@ -274,19 +305,21 @@ export type CollectionProperties = {
 // Options
 
 /**
- * TODO
+ * Options for validating collection documents.
  */
 export type ValidationOptions = {
   /**
-   * TODO
+   * JSON Schema description of the validation schema for documents.
    */
   rule: any;
   /**
-   * TODO
+   * When validation should be applied.
+   *
+   * Default: `"strict"`
    */
   level?: ValidationLevel;
   /**
-   * TODO
+   * Message to be used if validation fails.
    */
   message?: string;
 };
@@ -294,7 +327,7 @@ export type ValidationOptions = {
 /**
  * Options for setting a collection's properties.
  *
- * See {@link Collection.properties}.
+ * See {@link DocumentCollection.properties} and {@link EdgeCollection.properties}.
  */
 export type CollectionPropertiesOptions = {
   /**
@@ -303,11 +336,11 @@ export type CollectionPropertiesOptions = {
    */
   waitForSync?: boolean;
   /**
-   * TODO
+   * Options for validating documents in this collection.
    */
   validation?: ValidationOptions;
   /**
-   * (MMFiles only.) The maximum size for each journal or datafile in bytes.
+   * (MMFiles only.) Maximum size for each journal or datafile in bytes.
    *
    * Must be a number greater than or equal to `1048576` (1 MiB).
    */
@@ -315,15 +348,21 @@ export type CollectionPropertiesOptions = {
 };
 
 /**
- * TODO
+ * Options for retrieving a collection checksum.
  */
 export type CollectionChecksumOptions = {
   /**
-   * TODO
+   * If set to `true`, revision IDs will be included in the calculation
+   * of the checksum.
+   *
+   * Default: `false`
    */
   withRevisions?: boolean;
   /**
-   * TODO
+   * If set to `true`, document data will be included in the calculation
+   * of the checksum.
+   *
+   * Default: `false`
    */
   withData?: boolean;
 };
@@ -362,7 +401,7 @@ export type CollectionKeyOptions = {
    */
   increment?: number;
   /**
-   * (Autoincrement only.) The initial offset for the key.
+   * (Autoincrement only.) Initial offset for the key.
    */
   offset?: number;
 };
@@ -394,7 +433,7 @@ export type CreateCollectionOptions = {
    */
   keyOptions?: CollectionKeyOptions;
   /**
-   * TODO
+   * Options for validating documents in the collection.
    */
   validation?: ValidationOptions;
   /**
@@ -455,7 +494,7 @@ export type CreateCollectionOptions = {
    */
   doCompact?: boolean;
   /**
-   * (MMFiles only.) The maximum size for each journal or datafile in bytes.
+   * (MMFiles only.) Maximum size for each journal or datafile in bytes.
    *
    * Must be a number greater than or equal to `1048576` (1 MiB).
    */
@@ -657,24 +696,20 @@ export type CollectionImportOptions = {
    * (Edge collections only.) Prefix to prepend to `_from` attribute values.
    */
   fromPrefix?: string;
-
   /**
    * (Edge collections only.) Prefix to prepend to `_to` attribute values.
    */
   toPrefix?: string;
-
   /**
    * If set to `true`, the collection is truncated before the data is imported.
    *
    * Default: `false`
    */
   overwrite?: boolean;
-
   /**
    * Whether to wait for the documents to have been synced to disk.
    */
   waitForSync?: boolean;
-
   /**
    * Controls behavior when a unique constraint is violated.
    *
@@ -687,12 +722,10 @@ export type CollectionImportOptions = {
    * Default: `"error"`
    */
   onDuplicate?: "error" | "update" | "replace" | "ignore";
-
   /**
    * If set to `true`, the import will abort if any error occurs.
    */
   complete?: boolean;
-
   /**
    * Whether the response should contain additional details about documents
    * that could not be imported.
@@ -703,157 +736,7 @@ export type CollectionImportOptions = {
 // Results
 
 /**
- * TODO
- */
-export type CollectionCount = {
-  /**
-   * The number of documents in this collection.
-   */
-  count: number;
-};
-
-/**
- * TODO
- */
-export type CollectionFigures = {
-  /**
-   * TODO
-   */
-  figures: {
-    /**
-     * TODO
-     */
-    alive: {
-      count: number;
-      size: number;
-    };
-    /**
-     * TODO
-     */
-    dead: {
-      count: number;
-      size: number;
-      deletion: number;
-    };
-    /**
-     * TODO
-     */
-    datafiles: {
-      count: number;
-      fileSize: number;
-    };
-    /**
-     * TODO
-     */
-    journals: {
-      count: number;
-      fileSize: number;
-    };
-    /**
-     * TODO
-     */
-    compactors: {
-      count: number;
-      fileSize: number;
-    };
-    /**
-     * TODO
-     */
-    shapefiles: {
-      count: number;
-      fileSize: number;
-    };
-    /**
-     * TODO
-     */
-    shapes: {
-      count: number;
-      size: number;
-    };
-    /**
-     * TODO
-     */
-    attributes: {
-      count: number;
-      size: number;
-    };
-    /**
-     * TODO
-     */
-    indexes: {
-      count: number;
-      size: number;
-    };
-    /**
-     * TODO
-     */
-    lastTick: number;
-    /**
-     * TODO
-     */
-    uncollectedLogfileEntries: number;
-    /**
-     * TODO
-     */
-    documentReferences: number;
-    /**
-     * TODO
-     */
-    waitingFor: string;
-    /**
-     * TODO
-     */
-    compactionStatus: {
-      /**
-       * TODO
-       */
-      time: string;
-      /**
-       * TODO
-       */
-      message: string;
-      /**
-       * TODO
-       */
-      count: number;
-      /**
-       * TODO
-       */
-      filesCombined: number;
-      /**
-       * TODO
-       */
-      bytesRead: number;
-      /**
-       * TODO
-       */
-      bytesWritten: number;
-    };
-  };
-};
-
-/**
- * TODO
- */
-export type CollectionRevision = {
-  /**
-   * TODO
-   */
-  revision: string;
-};
-
-/**
- * TODO
- */
-export type CollectionChecksum = {
-  /**
-   * TODO
-   */
-  checksum: string;
-};
-
-/**
- * The result of a collection bulk import.
+ * Result of a collection bulk import.
  */
 export type CollectionImportResult = {
   /**
@@ -861,23 +744,23 @@ export type CollectionImportResult = {
    */
   error: false;
   /**
-   * The number of new documents imported.
+   * Number of new documents imported.
    */
   created: number;
   /**
-   * The number of documents that failed with an error.
+   * Number of documents that failed with an error.
    */
   errors: number;
   /**
-   * The number of empty documents.
+   * Number of empty documents.
    */
   empty: number;
   /**
-   * The number of documents updated.
+   * Number of documents updated.
    */
   updated: number;
   /**
-   * The number of documents that failed with an error that is ignored.
+   * Number of documents that failed with an error that is ignored.
    */
   ignored: number;
   /**
@@ -887,24 +770,12 @@ export type CollectionImportResult = {
 };
 
 /**
- * TODO
+ * Result of retrieving edges in a collection.
  */
 export type CollectionEdgesResult<T extends object = any> = {
-  /**
-   * TODO
-   */
   edges: Edge<T>[];
-  /**
-   * TODO
-   */
   stats: {
-    /**
-     * TODO
-     */
     scannedIndex: number;
-    /**
-     * TODO
-     */
     filtered: number;
   };
 };
@@ -916,6 +787,20 @@ export type CollectionEdgesResult<T extends object = any> = {
  *
  * See {@link EdgeCollection} for a variant of this interface more suited for
  * edge collections.
+ *
+ * When using TypeScript, collections can be cast to a specific document data
+ * type to increase type safety.
+ *
+ * @param T - Type to use for document data. Defaults to `any`.
+ *
+ * @example
+ * ```ts
+ * interface Person {
+ *   name: string;
+ * }
+ * const db = new Database();
+ * const documents = db.collection("persons") as DocumentCollection<Person>;
+ * ```
  */
 export interface DocumentCollection<T extends object = any>
   extends ArangoCollection {
@@ -1039,7 +924,7 @@ export interface DocumentCollection<T extends object = any>
     & ArangoResponseMetadata
     & CollectionMetadata
     & CollectionProperties
-    & CollectionCount
+    & { count: number }
   >;
   /**
    * (RocksDB only.) Instructs ArangoDB to recalculate the collection's
@@ -1072,8 +957,7 @@ export interface DocumentCollection<T extends object = any>
     & ArangoResponseMetadata
     & CollectionMetadata
     & CollectionProperties
-    & CollectionCount
-    & CollectionFigures
+    & { count: number; figures: Dict<any> }
   >;
   /**
    * Retrieves the collection revision ID.
@@ -1090,12 +974,12 @@ export interface DocumentCollection<T extends object = any>
     & ArangoResponseMetadata
     & CollectionMetadata
     & CollectionProperties
-    & CollectionRevision
+    & { revision: string }
   >;
   /**
    * Retrieves the collection checksum.
    *
-   * @param options - TODO
+   * @param options - Options for retrieving the checksum.
    *
    * @example
    * ```js
@@ -1110,8 +994,7 @@ export interface DocumentCollection<T extends object = any>
   ): Promise<
     & ArangoResponseMetadata
     & CollectionMetadata
-    & CollectionRevision
-    & CollectionChecksum
+    & { revision: string; checksum: string }
   >;
   /**
    * Instructs ArangoDB to load the collection into memory.
@@ -1130,7 +1013,7 @@ export interface DocumentCollection<T extends object = any>
    */
   load(
     count?: true,
-  ): Promise<ArangoResponseMetadata & CollectionMetadata & CollectionCount>;
+  ): Promise<ArangoResponseMetadata & CollectionMetadata & { count: number }>;
   /**
    * Instructs ArangoDB to load the collection into memory.
    *
@@ -1236,7 +1119,9 @@ export interface DocumentCollection<T extends object = any>
 
   //#region crud
   /**
-   * TODO
+   * Retrieves the `shardId` of the shard responsible for the given document.
+   *
+   * @param document - Document in the collection to look up the `shardId` of.
    */
   getResponsibleShard(document: Partial<Document<T>>): Promise<string>;
   /**
@@ -1295,7 +1180,7 @@ export interface DocumentCollection<T extends object = any>
    */
   documentExists(selector: DocumentSelector): Promise<boolean>;
   /**
-   * Retrives the document matching the given key or id.
+   * Retrieves the document matching the given key or id.
    *
    * Throws an exception when passed a document or `_id` from a different
    * collection.
@@ -1333,7 +1218,7 @@ export interface DocumentCollection<T extends object = any>
     options?: CollectionReadOptions,
   ): Promise<Document<T>>;
   /**
-   * Retrives the document matching the given key or id.
+   * Retrieves the document matching the given key or id.
    *
    * Throws an exception when passed a document or `_id` from a different
    * collection.
@@ -1348,7 +1233,7 @@ export interface DocumentCollection<T extends object = any>
    * const db = new Database();
    * const collection = db.collection("some-collection");
    * try {
-   *   const document = await collection.document("abc123");
+   *   const document = await collection.document("abc123", false);
    *   console.log(document);
    * } catch (e) {
    *   console.error("Could not find document");
@@ -1709,6 +1594,11 @@ export interface DocumentCollection<T extends object = any>
    * Returns an index description by name or `id` if it exists.
    *
    * @param selector - Index name, id or object with either property.
+   *
+   * @example
+   * ```js
+   * TODO
+   * ```
    */
   index(selector: IndexSelector): Promise<Index>;
   /**
@@ -1846,6 +1736,11 @@ export interface DocumentCollection<T extends object = any>
    * Deletes the index with the given name or `id` from the database.
    *
    * @param selector - Index name, id or object with either property.
+   *
+   * @example
+   * ```js
+   * TODO
+   * ```
    */
   dropIndex(
     selector: IndexSelector,
@@ -1858,11 +1753,26 @@ export interface DocumentCollection<T extends object = any>
  *
  * See {@link DocumentCollection} for a more generic variant of this interface
  * more suited for regular document collections.
+ *
+ * When using TypeScript, collections can be cast to a specific edge document
+ * data type to increase type safety.
+ *
+ * @param T - Type to use for edge document data. Defaults to `any`.
+ *
+ * @example
+ * ```ts
+ * interface Friend {
+ *   startDate: number;
+ *   endDate?: number;
+ * }
+ * const db = new Database();
+ * const edges = db.collection("friends") as EdgeCollection<Friend>;
+ * ```
  */
 export interface EdgeCollection<T extends object = any>
   extends DocumentCollection<T> {
   /**
-   * Retrives the document matching the given key or id.
+   * Retrieves the document matching the given key or id.
    *
    * Throws an exception when passed a document or `_id` from a different
    * collection, or if the document does not exist.
@@ -1899,9 +1809,8 @@ export interface EdgeCollection<T extends object = any>
     selector: DocumentSelector,
     options?: CollectionReadOptions,
   ): Promise<Edge<T>>;
-
   /**
-   * Retrives the document matching the given key or id.
+   * Retrieves the document matching the given key or id.
    *
    * Throws an exception when passed a document or `_id` from a different
    * collection, or if the document does not exist.
@@ -1916,7 +1825,7 @@ export interface EdgeCollection<T extends object = any>
    * const db = new Database();
    * const collection = db.collection("some-collection");
    * try {
-   *   const document = await collection.document("abc123");
+   *   const document = await collection.document("abc123", false);
    *   console.log(document);
    * } catch (e) {
    *   console.error("Could not find document");
@@ -1936,7 +1845,6 @@ export interface EdgeCollection<T extends object = any>
    * ```
    */
   document(selector: DocumentSelector, graceful: boolean): Promise<Edge<T>>;
-
   /**
    * Inserts a new document with the given `data` into the collection.
    *
@@ -1957,7 +1865,6 @@ export interface EdgeCollection<T extends object = any>
     data: EdgeData<T>,
     options?: CollectionInsertOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T> }>;
-
   /**
    * Inserts new documents with the given `data` into the collection.
    *
@@ -1981,7 +1888,6 @@ export interface EdgeCollection<T extends object = any>
     data: Array<EdgeData<T>>,
     options?: CollectionInsertOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T> }>>;
-
   /**
    * Replaces an existing document in the collection.
    *
@@ -2019,7 +1925,6 @@ export interface EdgeCollection<T extends object = any>
     newData: DocumentData<T>,
     options?: CollectionReplaceOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>;
-
   /**
    * Replaces existing documents in the collection, identified by the `_key` or
    * `_id` of each document.
@@ -2064,7 +1969,6 @@ export interface EdgeCollection<T extends object = any>
     newData: Array<DocumentData<T> & ({ _key: string } | { _id: string })>,
     options?: CollectionReplaceOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>>;
-
   /**
    * Updates an existing document in the collection.
    *
@@ -2095,13 +1999,13 @@ export interface EdgeCollection<T extends object = any>
    *   { returnNew: true }
    * );
    * console.log(result.new.active, result.new.best); // false true
+   * ```
    */
   update(
     selector: DocumentSelector,
     newData: Patch<DocumentData<T>>,
     options?: CollectionUpdateOptions,
   ): Promise<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>;
-
   /**
    * Updates existing documents in the collection, identified by the `_key` or
    * `_id` of each document.
@@ -2146,7 +2050,6 @@ export interface EdgeCollection<T extends object = any>
     >,
     options?: CollectionUpdateOptions,
   ): Promise<Array<DocumentMetadata & { new?: Edge<T>; old?: Edge<T> }>>;
-
   /**
    * Removes an existing document from the collection.
    *
@@ -2170,7 +2073,6 @@ export interface EdgeCollection<T extends object = any>
     selector: DocumentSelector,
     options?: CollectionRemoveOptions,
   ): Promise<DocumentMetadata & { old?: Edge<T> }>;
-
   /**
    * Removes existing documents from the collection.
    *
@@ -2193,7 +2095,6 @@ export interface EdgeCollection<T extends object = any>
     selectors: DocumentSelector[],
     options?: CollectionRemoveOptions,
   ): Promise<Array<DocumentMetadata & { old?: Edge<T> }>>;
-
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2216,7 +2117,6 @@ export interface EdgeCollection<T extends object = any>
     data: EdgeData<T>[],
     options?: CollectionImportOptions,
   ): Promise<CollectionImportResult>;
-
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2242,7 +2142,6 @@ export interface EdgeCollection<T extends object = any>
     data: any[][],
     options?: CollectionImportOptions,
   ): Promise<CollectionImportResult>;
-
   /**
    * Bulk imports the given `data` into the collection.
    *
@@ -2259,7 +2158,7 @@ export interface EdgeCollection<T extends object = any>
    * If `type` is set to `"auto"`, `data` can be in either of the formats
    * supported by `"documents"` or `"list"`.
    *
-   * @param data - The data to import as a ArrayBuffer (Node), Blob (browser) or
+   * @param data - The data to import as a ArrayBuffer or
    * string.
    * @param options - Options for importing the data.
    *
@@ -2302,7 +2201,6 @@ export interface EdgeCollection<T extends object = any>
       type?: "documents" | "list" | "auto";
     },
   ): Promise<CollectionImportResult>;
-
   //#endregion
 
   //#region edges
@@ -2333,7 +2231,6 @@ export interface EdgeCollection<T extends object = any>
   edges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
-
   /**
    * Retrieves a list of all incoming edges of the document matching the given
    * `selector`.
@@ -2356,11 +2253,11 @@ export interface EdgeCollection<T extends object = any>
    * ]);
    * const edges = await collection.inEdges("vertices/a");
    * console.log(edges.map((edge) => edge._key)); // ["z"]
+   * ```
    */
   inEdges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
-
   /**
    * Retrieves a list of all outgoing edges of the document matching the given
    * `selector`.
@@ -2388,29 +2285,12 @@ export interface EdgeCollection<T extends object = any>
   outEdges(
     selector: DocumentSelector,
   ): Promise<ArangoResponseMetadata & CollectionEdgesResult<T>>;
+  //#endregion
 }
 
 /**
- * The `Collection` type represents a collection in a {@link Database}.
- *
- * When using TypeScript, collections can be cast to {@link DocumentCollection}
- * or {@link EdgeCollection} in order to increase type safety.
- *
- * @param T - Type to use for document data. Defaults to `any`.
- *
- * @example
- * ```ts
- * interface Person {
- *   name: string;
- * }
- * interface Friend {
- *   startDate: number;
- *   endDate?: number;
- * }
- * const db = new Database();
- * const documents = db.collection("persons") as DocumentCollection<Person>;
- * const edges = db.collection("friends") as EdgeCollection<Friend>;
- * ```
+ * @internal
+ * @hidden
  */
 export class Collection<T extends object = any>
   implements EdgeCollection<T>, DocumentCollection<T> {
@@ -2526,7 +2406,7 @@ export class Collection<T extends object = any>
 
   count() {
     return this._get<
-      CollectionMetadata & CollectionProperties & CollectionCount
+      CollectionMetadata & CollectionProperties & { count: number }
     >("count");
   }
 
@@ -2540,25 +2420,24 @@ export class Collection<T extends object = any>
     return this._get<
       & CollectionMetadata
       & CollectionProperties
-      & CollectionCount
-      & CollectionFigures
+      & { count: number; figures: Dict<any> }
     >("figures");
   }
 
   revision() {
     return this._get<
-      CollectionMetadata & CollectionProperties & CollectionRevision
+      CollectionMetadata & CollectionProperties & { revision: string }
     >("revision");
   }
 
   checksum(options?: CollectionChecksumOptions) {
     return this._get<
-      CollectionMetadata & CollectionRevision & CollectionChecksum
+      CollectionMetadata & { revision: string; checksum: string }
     >("checksum", options);
   }
 
   load(count?: boolean) {
-    return this._put<CollectionMetadata & CollectionCount>(
+    return this._put<CollectionMetadata & { count: number }>(
       "load",
       typeof count === "boolean" ? { count } : undefined,
     );

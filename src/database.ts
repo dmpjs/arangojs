@@ -34,6 +34,7 @@ import {
   ArangoCollection,
   Collection,
   CollectionMetadata,
+  collectionToString,
   CollectionType,
   CreateCollectionOptions,
   DocumentCollection,
@@ -47,9 +48,9 @@ import {
   Headers,
   RequestOptions,
 } from "./connection.ts";
-import { ArrayCursor } from "./cursor.ts";
+import { ArrayCursor, BatchedArrayCursor } from "./cursor.ts";
 import {
-  EdgeDefinition,
+  EdgeDefinitionOptions,
   Graph,
   GraphCreateOptions,
   GraphInfo,
@@ -86,6 +87,60 @@ export function isArangoDatabase(database: any): database is Database {
   return Boolean(database && database.isArangoDatabase);
 }
 
+/**
+ * @internal
+ * @hidden
+ */
+function coerceTransactionCollections(
+  collections:
+    | (TransactionCollections & { allowImplicit?: boolean })
+    | (string | ArangoCollection)[]
+    | string
+    | ArangoCollection,
+): CoercedTransactionCollections {
+  if (typeof collections === "string") {
+    return { write: [collections] };
+  }
+
+  if (Array.isArray(collections)) {
+    return { write: collections.map(collectionToString) };
+  }
+
+  if (isArangoCollection(collections)) {
+    return { write: collectionToString(collections) };
+  }
+
+  const cols: CoercedTransactionCollections = {};
+  if (collections) {
+    if (collections.allowImplicit !== undefined) {
+      cols.allowImplicit = collections.allowImplicit;
+    }
+
+    if (collections.read) {
+      cols.read = Array.isArray(collections.read)
+        ? collections.read.map(collectionToString)
+        : collectionToString(collections.read);
+    }
+
+    if (collections.write) {
+      cols.write = Array.isArray(collections.write)
+        ? collections.write.map(collectionToString)
+        : collectionToString(collections.write);
+    }
+
+    if (collections.exclusive) {
+      cols.exclusive = Array.isArray(collections.exclusive)
+        ? collections.exclusive.map(collectionToString)
+        : collectionToString(collections.exclusive);
+    }
+  }
+  return cols;
+}
+
+/**
+ * @internal
+ * @hidden
+ */
 type CoercedTransactionCollections = {
   allowImplicit?: boolean;
   exclusive?: string | string[];
@@ -182,7 +237,7 @@ export type QueryOptions = {
    */
   count?: boolean;
   /**
-   * The number of result values to be transferred by the server in each
+   * Number of result values to be transferred by the server in each
    * network roundtrip (or "batch").
    *
    * Must be greater than zero.
@@ -196,7 +251,7 @@ export type QueryOptions = {
    */
   cache?: boolean;
   /**
-   * The maximum memory size in bytes that the query is allowed to use.
+   * Maximum memory size in bytes that the query is allowed to use.
    * Exceeding this value will result in the query failing with an error.
    *
    * If set to `0`, the memory limit is disabled.
@@ -213,7 +268,7 @@ export type QueryOptions = {
    */
   maxRuntime?: number;
   /**
-   * The time-to-live for the cursor in seconds. The cursor results may be
+   * Time-to-live for the cursor in seconds. The cursor results may be
    * garbage collected by ArangoDB after this much time has passed.
    *
    * Default: `30`
@@ -276,7 +331,7 @@ export type QueryOptions = {
   intermediateCommitSize?: number;
   /**
    * (Enterprise Edition cluster only.) If set to `true`, collections
-   * inaccessible to the current user will result in an access error instead
+   * inaccessible to current user will result in an access error instead
    * of being treated as empty.
    */
   skipInaccessibleCollections?: boolean;
@@ -317,17 +372,28 @@ export type ExplainOptions = {
 };
 
 /**
- * TODO
+ * Details for a transaction.
+ *
+ * See also {@link TransactionStatus}.
  */
 export type TransactionDetails = {
+  /**
+   * Unique identifier of the transaction.
+   */
   id: string;
+  /**
+   * Status (or "state") of the transaction.
+   */
   state: "running" | "committed" | "aborted";
 };
 
 /**
- * TODO
+ * Plan explaining query execution.
  */
 export type ExplainPlan = {
+  /**
+   * Execution nodes in this plan.
+   */
   nodes: {
     [key: string]: any;
     type: string;
@@ -336,50 +402,110 @@ export type ExplainPlan = {
     estimatedCost: number;
     estimatedNrItems: number;
   }[];
+  /**
+   * Rules applied by the optimizer.
+   */
   rules: string[];
+  /**
+   * Information about collections involved in the query.
+   */
   collections: {
     name: string;
     type: "read" | "write";
   }[];
+  /**
+   * Variables used in the query.
+   */
   variables: {
     id: number;
     name: string;
   }[];
+  /**
+   * Total estimated cost of the plan.
+   */
   estimatedCost: number;
+  /**
+   * Estimated number of items returned by the query.
+   */
   estimatedNrItems: number;
-  initialize: boolean;
+  /**
+   * Whether the query is a data modification query.
+   */
   isModificationQuery: boolean;
 };
 
 /**
- * TODO
+ * Result of explaining a query with a single plan.
  */
 export type SingleExplainResult = {
+  /**
+   * Query plan.
+   */
   plan: ExplainPlan;
+  /**
+   * Whether it would be possible to cache the query.
+   */
   cacheable: boolean;
+  /**
+   * Warnings encountered while planning the query execution.
+   */
   warnings: { code: number; message: string }[];
+  /**
+   * Statistical information about the query plan generation.
+   */
   stats: {
+    /**
+     * Total number of rules executed for this query.
+     */
     rulesExecuted: number;
+    /**
+     * Number of rules skipped for this query.
+     */
     rulesSkipped: number;
+    /**
+     * Total number of plans created.
+     */
     plansCreated: number;
   };
 };
 
 /**
- * TODO
+ * Result of explaining a query with multiple plans.
  */
 export type MultiExplainResult = {
+  /**
+   * Query plans.
+   */
   plans: ExplainPlan[];
+  /**
+   * Whether it would be possible to cache the query.
+   */
+  cacheable: boolean;
+  /**
+   * Warnings encountered while planning the query execution.
+   */
   warnings: { code: number; message: string }[];
+  /**
+   * Statistical information about the query plan generation.
+   */
   stats: {
+    /**
+     * Total number of rules executed for this query.
+     */
     rulesExecuted: number;
+    /**
+     * Number of rules skipped for this query.
+     */
     rulesSkipped: number;
+    /**
+     * Total number of plans created.
+     */
     plansCreated: number;
   };
 };
 
 /**
- * TODO
+ * Node in an AQL abstract syntax tree (AST).
  */
 export type AstNode = {
   [key: string]: any;
@@ -388,24 +514,55 @@ export type AstNode = {
 };
 
 /**
- * TODO
+ * Result of parsing a query.
  */
 export type ParseResult = {
+  /**
+   * Whether the query was parsed.
+   */
   parsed: boolean;
+  /**
+   * Names of all collections involved in the query.
+   */
   collections: string[];
+  /**
+   * Names of all bind parameters used in the query.
+   */
   bindVars: string[];
+  /**
+   * Abstract syntax tree (AST) of the query.
+   */
   ast: AstNode[];
 };
 
 /**
- * TODO
+ * Information about query tracking.
  */
 export type QueryTracking = {
+  /**
+   * Whether query tracking is enabled.
+   */
   enabled: boolean;
+  /**
+   * Maximum query string length in bytes that is kept in the list.
+   */
   maxQueryStringLength: number;
+  /**
+   * Maximum number of slow queries that is kept in the list.
+   */
   maxSlowQueries: number;
+  /**
+   * Threshold execution time in seconds for when a query is
+   * considered slow.
+   */
   slowQueryThreshold: number;
+  /**
+   * Whether bind parameters are being tracked along with queries.
+   */
   trackBindVars: boolean;
+  /**
+   * Whether slow queries are being tracked.
+   */
   trackSlowQueries: boolean;
 };
 
@@ -418,15 +575,15 @@ export type QueryTrackingOptions = {
    */
   enabled?: boolean;
   /**
-   * The maximum query string length in bytes that will be kept in the list.
+   * Maximum query string length in bytes that will be kept in the list.
    */
   maxQueryStringLength?: number;
   /**
-   * The maximum number of slow queries to be kept in the list.
+   * Maximum number of slow queries to be kept in the list.
    */
   maxSlowQueries?: number;
   /**
-   * The threshold execution time in seconds for when a query will be
+   * Threshold execution time in seconds for when a query will be
    * considered slow.
    */
   slowQueryThreshold?: number;
@@ -442,15 +599,36 @@ export type QueryTrackingOptions = {
 };
 
 /**
- * TODO
+ * Object describing a query.
  */
 export type QueryInfo = {
+  /**
+   * Unique identifier for this query.
+   */
   id: string;
+  /**
+   * Query string (potentially truncated).
+   */
   query: string;
+  /**
+   * Bind parameters used in the query.
+   */
   bindVars: Dict<any>;
+  /**
+   * Query's running time in seconds.
+   */
   runTime: number;
+  /**
+   * Date and time the query was started.
+   */
   started: string;
+  /**
+   * Query's current execution state.
+   */
   state: "executing" | "finished" | "killed";
+  /**
+   * Whether the query uses a streaming cursor.
+   */
   stream: boolean;
 };
 
@@ -488,8 +666,6 @@ export type CreateDatabaseOptions = {
    * Database users to create with the database.
    */
   users?: CreateDatabaseUser[];
-
-  // Cluster options
   /**
    * (Cluster only.) The sharding method to use for new collections in the
    * database.
@@ -511,35 +687,90 @@ export type CreateDatabaseOptions = {
 };
 
 /**
- * TODO
+ * Object describing a database.
+ *
+ * See {@link Database.get}.
  */
 export type DatabaseInfo = {
+  /**
+   * Name of the database.
+   */
   name: string;
+  /**
+   * Unique identifier of the database.
+   */
   id: string;
+  /**
+   * File system path of the database.
+   */
   path: string;
+  /**
+   * Whether the database is the system database.
+   */
   isSystem: boolean;
-
-  // Cluster options
+  /**
+   * (Cluster only.) The sharding method to use for new collections in the
+   * database.
+   */
   sharding?: "" | "flexible" | "single";
+  /**
+   * (Cluster only.) Default replication factor for new collections in this
+   * database.
+   */
   replicationFactor?: "satellite" | number;
+  /**
+   * (Cluster only.) Default write concern for new collections created in this
+   * database.
+   */
   writeConcern?: number;
+  /**
+   * (Cluster only.) Default write concern for new collections created in this
+   * database.
+   *
+   * @deprecated Renamed to `writeConcern` in ArangoDB 3.6.
+   */
+  minReplicationFactor?: number;
 };
 
 /**
- * TODO
+ * Result of retrieving database version information.
  */
 export type VersionInfo = {
+  /**
+   * Value identifying the server type, i.e. `"arango"`.
+   */
   server: string;
+  /**
+   * ArangoDB license type or "edition".
+   */
   license: "community" | "enterprise";
+  /**
+   * ArangoDB server version.
+   */
   version: string;
+  /**
+   * Additional information about the ArangoDB server.
+   */
+  details?: { [key: string]: string };
 };
 
 /**
- * TODO
+ * Definition of an AQL User Function.
  */
 export type AqlUserFunction = {
+  /**
+   * Name of the AQL User Function.
+   */
   name: string;
+  /**
+   * Implementation of the AQL User Function.
+   */
   code: string;
+  /**
+   * Whether the function is deterministic.
+   *
+   * See {@link Database.createFunction}.
+   */
   isDeterministic: boolean;
 };
 
@@ -720,39 +951,99 @@ export type UninstallServiceOptions = {
 };
 
 /**
- * TODO
+ * Object briefly describing a Foxx service.
  */
 export type ServiceSummary = {
+  /**
+   * Service mount point, relative to the database.
+   */
   mount: string;
+  /**
+   * Name defined in the service manifest.
+   */
   name?: string;
+  /**
+   * Version defined in the service manifest.
+   */
   version?: string;
+  /**
+   * Service dependencies the service expects to be able to match as a mapping
+   * from dependency names to versions the service is compatible with.
+   */
   provides: Dict<string>;
+  /**
+   * Whether development mode is enabled for this service.
+   */
   development: boolean;
+  /**
+   * Whether the service is running in legacy compatibility mode.
+   */
   legacy: boolean;
 };
 
 /**
- * TODO
+ * Object describing a Foxx service in detail.
  */
 export type ServiceInfo = {
+  /**
+   * Service mount point, relative to the database.
+   */
   mount: string;
+  /**
+   * File system path of the service.
+   */
   path: string;
+  /**
+   * Name defined in the service manifest.
+   */
   name?: string;
+  /**
+   * Version defined in the service manifest.
+   */
   version?: string;
+  /**
+   * Whether development mode is enabled for this service.
+   */
   development: boolean;
+  /**
+   * Whether the service is running in legacy compatibility mode.
+   */
   legacy: boolean;
+  /**
+   * Content of the service manifest of this service.
+   */
   manifest: FoxxManifest;
+  /**
+   * Internal checksum of the service's initial source bundle.
+   */
   checksum: string;
+  /**
+   * Options for this service.
+   */
   options: {
+    /**
+     * Configuration values set for this service.
+     */
     configuration: Dict<any>;
+    /**
+     * Service dependency configuration of this service.
+     */
     dependencies: Dict<string>;
   };
 };
 
 /**
- * TODO
+ * Object describing a configuration option of a Foxx service.
  */
 export type ServiceConfiguration = {
+  /**
+   * Data type of the configuration value.
+   *
+   * **Note**: `"int"` and `"bool"` are historical synonyms for `"integer"` and
+   * `"boolean"`. The `"password"` type is synonymous with `"string"` but can
+   * be used to distinguish values which should not be displayed in plain text
+   * by software when managing the service.
+   */
   type:
     | "integer"
     | "boolean"
@@ -762,55 +1053,127 @@ export type ServiceConfiguration = {
     | "password"
     | "int"
     | "bool";
+  /**
+   * Current value of the configuration option as stored internally.
+   */
   currentRaw: any;
+  /**
+   * Processed current value of the configuration option as exposed in the
+   * service code.
+   */
   current: any;
+  /**
+   * Formatted name of the configuration option.
+   */
   title: string;
+  /**
+   * Human-readable description of the configuration option.
+   */
   description?: string;
+  /**
+   * Whether the configuration option must be set in order for the service
+   * to be operational.
+   */
   required: boolean;
+  /**
+   * Default value of the configuration option.
+   */
   default?: any;
 };
 
 /**
- * TODO
+ * Object describing a single-service dependency defined by a Foxx service.
  */
 export type SingleServiceDependency = {
+  /**
+   * Whether this is a multi-service dependency.
+   */
   multiple: false;
+  /**
+   * Current mount point the dependency is resolved to.
+   */
   current?: string;
+  /**
+   * Formatted name of the dependency.
+   */
   title: string;
+  /**
+   * Name of the service the dependency expects to match.
+   */
   name: string;
+  /**
+   * Version of the service the dependency expects to match.
+   */
   version: string;
+  /**
+   * Human-readable description of the dependency.
+   */
   description?: string;
+  /**
+   * Whether the dependency must be matched in order for the service
+   * to be operational.
+   */
   required: boolean;
 };
 
 /**
- * TODO
+ * Object describing a multi-service dependency defined by a Foxx service.
  */
 export type MultiServiceDependency = {
+  /**
+   * Whether this is a multi-service dependency.
+   */
   multiple: true;
+  /**
+   * Current mount points the dependency is resolved to.
+   */
   current?: string[];
+  /**
+   * Formatted name of the dependency.
+   */
   title: string;
+  /**
+   * Name of the service the dependency expects to match.
+   */
   name: string;
+  /**
+   * Version of the service the dependency expects to match.
+   */
   version: string;
+  /**
+   * Human-readable description of the dependency.
+   */
   description?: string;
+  /**
+   * Whether the dependency must be matched in order for the service
+   * to be operational.
+   */
   required: boolean;
 };
-
-/**
- * TODO
- */
-export type ServiceDependency =
-  | SingleServiceDependency
-  | MultiServiceDependency;
 
 /**
  * Test stats for a Foxx service's tests.
  */
 export type ServiceTestStats = {
+  /**
+   * Total number of tests found.
+   */
   tests: number;
+  /**
+   * Number of tests that ran successfully.
+   */
   passes: number;
+  /**
+   * Number of tests that failed.
+   */
   failures: number;
+  /**
+   * Number of tests skipped or not executed.
+   */
   pending: number;
+  /**
+   * Total test duration in milliseconds.
+   */
   duration: number;
 };
 
@@ -962,6 +1325,7 @@ export class Database {
    * Equivalent to the `url` option in {@link Config}.
    */
   constructor(url: string | string[]);
+
   // There's currently no way to hide a single overload from typedoc
   // /**
   //  * @internal
@@ -975,16 +1339,23 @@ export class Database {
     if (isArangoDatabase(configOrDatabase)) {
       const connection = configOrDatabase._connection;
       const databaseName = name || configOrDatabase.name;
+
       this._connection = connection;
       this._name = databaseName;
+
       const database = connection.database(databaseName);
-      if (database) return database;
+
+      if (database) {
+        return database;
+      }
     } else {
       const config = configOrDatabase;
+
       const { databaseName, ...options } =
         typeof config === "string" || Array.isArray(config)
           ? { databaseName: undefined, url: config }
           : config;
+
       this._connection = new Connection(options);
       this._name = databaseName || "_system";
     }
@@ -1005,7 +1376,7 @@ export class Database {
   }
 
   /**
-   * The name of the ArangoDB database this instance represents.
+   * Name of the ArangoDB database this instance represents.
    */
   get name() {
     return this._name;
@@ -1013,6 +1384,9 @@ export class Database {
 
   /**
    * Fetches version information from the ArangoDB server.
+   *
+   * @param details - If set to `true`, additional information about the
+   * ArangoDB server will be available as the `details` property.
    *
    * @example
    * ```js
@@ -1024,11 +1398,12 @@ export class Database {
    * // server: description of the server
    * ```
    */
-  version(): Promise<VersionInfo> {
+  version(details?: boolean): Promise<VersionInfo> {
     return this.request(
       {
         method: "GET",
         path: "/_api/version",
+        qs: { details },
       },
       (res) => res.data,
     );
@@ -1121,6 +1496,7 @@ export class Database {
       { path: "/_api/cluster/endpoints" },
       (res) => res.data.endpoints.map((endpoint: any) => endpoint.endpoint),
     );
+
     this._connection.addToHostList(urls);
   }
 
@@ -1154,6 +1530,7 @@ export class Database {
   }
   //#endregion
 
+  //#region auth
   /**
    * Updates the `Database` instance's `authorization` header to use Basic
    * authentication with the given `username` and `password`, then returns
@@ -1173,6 +1550,7 @@ export class Database {
    */
   useBasicAuth(username: string = "root", password: string = ""): this {
     this._connection.setBasicAuth({ username, password });
+
     return this;
   }
 
@@ -1191,6 +1569,7 @@ export class Database {
    */
   useBearerAuth(token: string): this {
     this._connection.setBearerAuth({ token });
+
     return this;
   }
 
@@ -1220,6 +1599,7 @@ export class Database {
       },
       (res) => {
         this.useBearerAuth(res.data.jwt);
+
         return res.data.jwt;
       },
     );
@@ -1235,9 +1615,8 @@ export class Database {
    *
    * @param databaseName - Name of the database.
    */
-  database(databaseName: string) {
-    const db = new (Database as any)(this, databaseName) as Database;
-    return db;
+  database(databaseName: string): Database {
+    return new (Database as any)(this, databaseName) as Database;
   }
 
   /**
@@ -1270,6 +1649,7 @@ export class Database {
   async exists(): Promise<boolean> {
     try {
       await this.get();
+
       return true;
     } catch (err) {
       if (
@@ -1494,6 +1874,7 @@ export class Database {
         new Collection(this, collectionName),
       );
     }
+
     return this._collections.get(collectionName)!;
   }
 
@@ -1566,7 +1947,9 @@ export class Database {
     options?: CreateCollectionOptions & { type?: CollectionType },
   ): Promise<DocumentCollection<T> & EdgeCollection<T>> {
     const collection = this.collection(collectionName);
+
     await collection.create(options);
+
     return collection;
   }
 
@@ -1617,7 +2000,7 @@ export class Database {
    * **Note**: Renaming collections may not be supported when ArangoDB is
    * running in a cluster configuration.
    *
-   * @param collectionName - The current name of the collection.
+   * @param collectionName - Current name of the collection.
    * @param newName - The new name of the collection.
    */
   async renameCollection(
@@ -1632,7 +2015,9 @@ export class Database {
       },
       (res) => res.data,
     );
+
     this._collections.delete(collectionName);
+
     return result;
   }
 
@@ -1702,6 +2087,7 @@ export class Database {
     excludeSystem: boolean = true,
   ): Promise<Array<DocumentCollection & EdgeCollection>> {
     const collections = await this.listCollections(excludeSystem);
+
     return collections.map((data) => this.collection(data.name));
   }
   //#endregion
@@ -1717,6 +2103,7 @@ export class Database {
     if (!this._graphs.has(graphName)) {
       this._graphs.set(graphName, new Graph(this, graphName));
     }
+
     return this._graphs.get(graphName)!;
   }
 
@@ -1730,11 +2117,13 @@ export class Database {
    */
   async createGraph(
     graphName: string,
-    edgeDefinitions: EdgeDefinition[],
+    edgeDefinitions: EdgeDefinitionOptions[],
     options?: GraphCreateOptions,
   ): Promise<Graph> {
     const graph = this.graph(graphName);
+
     await graph.create(edgeDefinitions, options);
+
     return graph;
   }
 
@@ -1790,6 +2179,7 @@ export class Database {
     if (!this._views.has(viewName)) {
       this._views.set(viewName, new View(this, viewName));
     }
+
     return this._views.get(viewName)!;
   }
 
@@ -1803,16 +2193,18 @@ export class Database {
    * @example
    * ```js
    * const db = new Database();
-   * const view = await db.createArangoSearchView("potatoes");
+   * const view = await db.createView("potatoes");
    * // the ArangoSearch View "potatoes" now exists
    * ```
    */
-  async createArangoSearchView(
+  async createView(
     viewName: string,
     options?: ArangoSearchViewPropertiesOptions,
   ): Promise<ArangoSearchView> {
     const view = this.view(viewName);
+
     await view.create({ ...options, type: ViewType.ARANGOSEARCH_VIEW });
+
     return view;
   }
 
@@ -1840,7 +2232,9 @@ export class Database {
       },
       (res) => res.data,
     );
+
     this._views.delete(viewName);
+
     return result;
   }
 
@@ -1877,6 +2271,7 @@ export class Database {
    */
   async views(): Promise<ArangoSearchView[]> {
     const views = await this.listViews();
+
     return views.map((data) => this.view(data.name));
   }
   //#endregion
@@ -1897,6 +2292,7 @@ export class Database {
     if (!this._analyzers.has(analyzerName)) {
       this._analyzers.set(analyzerName, new Analyzer(this, analyzerName));
     }
+
     return this._analyzers.get(analyzerName)!;
   }
 
@@ -1919,7 +2315,9 @@ export class Database {
     options: CreateAnalyzerOptions,
   ): Promise<Analyzer> {
     const analyzer = this.analyzer(analyzerName);
+
     await analyzer.create(options);
+
     return analyzer;
   }
 
@@ -1955,6 +2353,7 @@ export class Database {
    */
   async analyzers(): Promise<Analyzer[]> {
     const analyzers = await this.listAnalyzers();
+
     return analyzers.map((data) => this.analyzer(data.name));
   }
   //#endregion
@@ -2066,7 +2465,7 @@ export class Database {
   /**
    * Performs a server-side transaction and returns its return value.
    *
-   * The Collection can be specified as a collection name (string) or an object
+   * The collection can be specified as a collection name (string) or an object
    * implementing the {@link ArangoCollection} interface: {@link Collection},
    * {@link GraphVertexCollection}, {@link GraphEdgeCollection} as well as
    * (in TypeScript) {@link DocumentCollection} and {@link EdgeCollection}.
@@ -2141,7 +2540,7 @@ export class Database {
    *
    * See also {@link Database.beginTransaction}.
    *
-   * @param id - The `id` of an existing stream transaction.
+   * @param transactionId - The `id` of an existing stream transaction.
    *
    * @example
    * ```js
@@ -2176,9 +2575,9 @@ export class Database {
    *   read: ["vertices"],
    *   write: [edges] // collection instances can be passed directly
    * });
-   * const start = await trx.run(() => vertices.document("a"));
-   * const end = await trx.run(() => vertices.document("b"));
-   * await trx.run(() => edges.save({ _from: start._id, _to: end._id }));
+   * const start = await trx.step(() => vertices.document("a"));
+   * const end = await trx.step(() => vertices.document("b"));
+   * await trx.step(() => edges.save({ _from: start._id, _to: end._id }));
    * await trx.commit();
    * ```
    */
@@ -2207,9 +2606,9 @@ export class Database {
    *   "vertices",
    *   edges // collection instances can be passed directly
    * ]);
-   * const start = await trx.run(() => vertices.document("a"));
-   * const end = await trx.run(() => vertices.document("b"));
-   * await trx.run(() => edges.save({ _from: start._id, _to: end._id }));
+   * const start = await trx.step(() => vertices.document("a"));
+   * const end = await trx.step(() => vertices.document("b"));
+   * await trx.step(() => edges.save({ _from: start._id, _to: end._id }));
    * await trx.commit();
    * ```
    */
@@ -2226,7 +2625,7 @@ export class Database {
    * {@link GraphVertexCollection}, {@link GraphEdgeCollection} as well as
    * (in TypeScript) {@link DocumentCollection} and {@link EdgeCollection}.
    *
-   * @param collections - A collection that can be read from and written to
+   * @param collection - A collection that can be read from and written to
    * during the transaction.
    * @param options - Options for the transaction.
    *
@@ -2239,7 +2638,7 @@ export class Database {
    * const trx = await db.beginTransaction(
    *   edges // collection instances can be passed directly
    * );
-   * await trx.run(() => edges.save({ _from: start._id, _to: end._id }));
+   * await trx.step(() => edges.save({ _from: start._id, _to: end._id }));
    * await trx.commit();
    * ```
    */
@@ -2303,6 +2702,7 @@ export class Database {
    */
   async transactions(): Promise<Transaction[]> {
     const transactions = await this.listTransactions();
+
     return transactions.map((data) => this.transaction(data.id));
   }
   //#endregion
@@ -2413,6 +2813,7 @@ export class Database {
     } else if (isAqlLiteral(query)) {
       query = query.toAQL();
     }
+
     const {
       allowDirtyRead,
       count,
@@ -2442,7 +2843,12 @@ export class Database {
         timeout,
       },
       (res) =>
-        new ArrayCursor(this, res.data, res.arangojsHostId, allowDirtyRead),
+        new BatchedArrayCursor(
+          this,
+          res.data,
+          res.arangojsHostId,
+          allowDirtyRead,
+        ).items,
     );
   }
 
@@ -2520,6 +2926,7 @@ export class Database {
     } else if (isAqlLiteral(query)) {
       query = query.toAQL();
     }
+
     return this.request(
       {
         method: "POST",
@@ -2547,6 +2954,7 @@ export class Database {
     } else if (isAqlLiteral(query)) {
       query = query.toAQL();
     }
+
     return this.request(
       {
         method: "POST",
@@ -2850,6 +3258,7 @@ export class Database {
       dependencies,
       source,
     });
+
     return await this.request(
       {
         ...req,
@@ -3005,16 +3414,20 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       !minimal ||
       !Object.keys(result).every((key: string) => result[key].title)
     ) {
       return result;
     }
+
     const values: any = {};
+
     for (const key of Object.keys(result)) {
       values[key] = result[key].current;
     }
+
     return values;
   }
 
@@ -3097,6 +3510,7 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       minimal ||
       !result.values ||
@@ -3106,14 +3520,17 @@ export class Database {
     ) {
       return result;
     }
+
     const result2 = (await this.getServiceConfiguration(mount, false)) as Dict<
       ServiceConfiguration & { warning?: string }
     >;
+
     if (result.warnings) {
       for (const key of Object.keys(result2)) {
         result2[key].warning = result.warnings[key];
       }
     }
+
     return result2;
   }
 
@@ -3196,6 +3613,7 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       minimal ||
       !result.values ||
@@ -3205,14 +3623,17 @@ export class Database {
     ) {
       return result;
     }
+
     const result2 = (await this.getServiceConfiguration(mount, false)) as Dict<
       ServiceConfiguration & { warning?: string }
     >;
+
     if (result.warnings) {
       for (const key of Object.keys(result2)) {
         result2[key].warning = result.warnings[key];
       }
     }
+
     return result2;
   }
 
@@ -3239,7 +3660,7 @@ export class Database {
   async getServiceDependencies(
     mount: string,
     minimal?: false,
-  ): Promise<Dict<ServiceDependency>>;
+  ): Promise<Dict<SingleServiceDependency | MultiServiceDependency>>;
   /**
    * Retrieves information about the service's dependencies and their current
    * mount points.
@@ -3272,16 +3693,20 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       !minimal ||
       !Object.keys(result).every((key: string) => result[key].title)
     ) {
       return result;
     }
+
     const values: any = {};
+
     for (const key of Object.keys(result)) {
       values[key] = result[key].current;
     }
+
     return values;
   }
 
@@ -3293,7 +3718,7 @@ export class Database {
    * {@link Database.getServiceDependencies}.
    *
    * @param mount - The service's mount point, relative to the database.
-   * @param cfg - An object mapping dependency aliases to mount points.
+   * @param deps - An object mapping dependency aliases to mount points.
    * @param minimal - If set to `true`, the result will only include each
    * dependency's current mount point. Otherwise it will include the full
    * definition for each dependency.
@@ -3310,12 +3735,17 @@ export class Database {
    *   console.log(`${dep.title} (${key}): ${dep.current}`);
    *   if (dep.warning) console.warn(`Warning: ${dep.warning}`);
    * }
+   * ```
    */
   async replaceServiceDependencies(
     mount: string,
     deps: Dict<string>,
     minimal?: false,
-  ): Promise<Dict<ServiceDependency & { warning?: string }>>;
+  ): Promise<
+    Dict<
+      SingleServiceDependency | MultiServiceDependency & { warning?: string }
+    >
+  >;
   /**
    * Replaces the dependencies of the given service, discarding any existing
    * mount points for dependencies not specified.
@@ -3324,7 +3754,7 @@ export class Database {
    * {@link Database.getServiceDependencies}.
    *
    * @param mount - The service's mount point, relative to the database.
-   * @param cfg - An object mapping dependency aliases to mount points.
+   * @param deps - An object mapping dependency aliases to mount points.
    * @param minimal - If set to `true`, the result will only include each
    * dependency's current mount point. Otherwise it will include the full
    * definition for each dependency.
@@ -3345,6 +3775,7 @@ export class Database {
    *   console.log(`${key}: ${value}`);
    *   if (info.warnings[key]) console.warn(`Warning: ${info.warnings[key]}`);
    * }
+   * ```
    */
   async replaceServiceDependencies(
     mount: string,
@@ -3368,6 +3799,7 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       minimal ||
       !result.values ||
@@ -3377,15 +3809,18 @@ export class Database {
     ) {
       return result;
     }
+
     // Work around "minimal" flag not existing in 3.3
     const result2 = (await this.getServiceDependencies(mount, false)) as Dict<
-      ServiceDependency & { warning?: string }
+      SingleServiceDependency | MultiServiceDependency & { warning?: string }
     >;
+
     if (result.warnings) {
       for (const key of Object.keys(result2)) {
         (result2[key] as any).warning = result.warnings[key];
       }
     }
+
     return result2;
   }
 
@@ -3397,7 +3832,7 @@ export class Database {
    * {@link Database.getServiceDependencies}.
    *
    * @param mount - The service's mount point, relative to the database.
-   * @param cfg - An object mapping dependency aliases to mount points.
+   * @param deps - An object mapping dependency aliases to mount points.
    * @param minimal - If set to `true`, the result will only include each
    * dependency's current mount point. Otherwise it will include the full
    * definition for each dependency.
@@ -3419,7 +3854,11 @@ export class Database {
     mount: string,
     deps: Dict<string>,
     minimal?: false,
-  ): Promise<Dict<ServiceDependency & { warning?: string }>>;
+  ): Promise<
+    Dict<
+      SingleServiceDependency | MultiServiceDependency & { warning?: string }
+    >
+  >;
   /**
    * Updates the dependencies of the given service while maintaining any
    * existing mount points for dependencies not specified.
@@ -3428,7 +3867,7 @@ export class Database {
    * {@link Database.getServiceDependencies}.
    *
    * @param mount - The service's mount point, relative to the database.
-   * @param cfg - An object mapping dependency aliases to mount points.
+   * @param deps - An object mapping dependency aliases to mount points.
    * @param minimal - If set to `true`, the result will only include each
    * dependency's current mount point. Otherwise it will include the full
    * definition for each dependency.
@@ -3449,6 +3888,7 @@ export class Database {
    *   console.log(`${key}: ${value}`);
    *   if (info.warnings[key]) console.warn(`Warning: ${info.warnings[key]}`);
    * }
+   * ```
    */
   async updateServiceDependencies(
     mount: string,
@@ -3472,6 +3912,7 @@ export class Database {
       },
       (res) => res.data,
     );
+
     if (
       minimal ||
       !result.values ||
@@ -3481,15 +3922,18 @@ export class Database {
     ) {
       return result;
     }
+
     // Work around "minimal" flag not existing in 3.3
     const result2 = (await this.getServiceDependencies(mount, false)) as Dict<
-      ServiceDependency & { warning?: string }
+      (SingleServiceDependency | MultiServiceDependency) & { warning?: string }
     >;
+
     if (result.warnings) {
       for (const key of Object.keys(result2)) {
         result2[key].warning = result.warnings[key];
       }
     }
+
     return result2;
   }
 
@@ -3890,44 +4334,4 @@ export class Database {
     );
   }
   //#endregion
-}
-
-function coerceTransactionCollections(
-  collections:
-    | (TransactionCollections & { allowImplicit?: boolean })
-    | (string | ArangoCollection)[]
-    | string
-    | ArangoCollection,
-): CoercedTransactionCollections {
-  if (typeof collections === "string") {
-    return { write: [collections] };
-  }
-  if (Array.isArray(collections)) {
-    return { write: collections.map(colToString) };
-  }
-  if (isArangoCollection(collections)) {
-    return { write: colToString(collections) };
-  }
-  const cols: CoercedTransactionCollections = {};
-  if (collections) {
-    if (collections.allowImplicit !== undefined) {
-      cols.allowImplicit = collections.allowImplicit;
-    }
-    if (collections.read) {
-      cols.read = Array.isArray(collections.read)
-        ? collections.read.map(colToString)
-        : colToString(collections.read);
-    }
-    if (collections.write) {
-      cols.write = Array.isArray(collections.write)
-        ? collections.write.map(colToString)
-        : colToString(collections.write);
-    }
-    if (collections.exclusive) {
-      cols.exclusive = Array.isArray(collections.exclusive)
-        ? collections.exclusive.map(colToString)
-        : colToString(collections.exclusive);
-    }
-  }
-  return cols;
 }

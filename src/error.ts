@@ -16,11 +16,6 @@
  * Modifications copyright (C) 2020 Daniel Bannert
  */
 
-/**
- * TODO
- *
- * @packageDocumentation
- */
 const messages: { [key: number]: string } = {
   0: "Network Error",
   300: "Multiple Choices",
@@ -86,7 +81,31 @@ const nativeErrorKeys = [
 ] as (keyof Error)[];
 
 /**
- * TODO
+ * Indicates whether the given value represents an {@link ArangoError}.
+ *
+ * @param error - A value that might be an `ArangoError`.
+ */
+export function isArangoError(error: any): error is ArangoError {
+  return Boolean(error && error.isArangoError);
+}
+
+/**
+ * Indicates whether the given value represents an ArangoDB error response.
+ *
+ * @internal
+ */
+export function isArangoErrorResponse(body: any): boolean {
+  return (
+    body &&
+    body.hasOwnProperty("error") &&
+    body.hasOwnProperty("code") &&
+    body.hasOwnProperty("errorMessage") &&
+    body.hasOwnProperty("errorNum")
+  );
+}
+
+/**
+ * Indicates whether the given value represents a Node.js `SystemError`.
  */
 export function isSystemError(err: any): err is SystemError {
   return (
@@ -98,7 +117,7 @@ export function isSystemError(err: any): err is SystemError {
 }
 
 /**
- * TODO
+ * Interface representing `SystemError`.
  */
 export interface SystemError extends Error {
   code: string;
@@ -107,13 +126,24 @@ export interface SystemError extends Error {
 }
 
 /**
- * TODO
+ * Represents an error returned by ArangoDB.
  */
 export class ArangoError extends Error {
   name = "ArangoError";
+  /**
+   * ArangoDB error code.
+   *
+   * See {@link https://www.arangodb.com/docs/stable/appendix-error-codes.html | ArangoDB error documentation}.
+   */
   errorNum: number;
+  /**
+   * HTTP status code included in the server error response object.
+   */
   code: number;
   statusCode: number;
+  /**
+   * Server response object.
+   */
   response: any;
 
   /**
@@ -151,11 +181,17 @@ export class ArangoError extends Error {
 }
 
 /**
- * TODO
+ * Represents a plain HTTP error response.
  */
 export class HttpError extends Error {
   name = "HttpError";
+  /**
+   * Server response object.
+   */
   response: any;
+  /**
+   * HTTP status code of the server response.
+   */
   code: number;
   statusCode: number;
 
