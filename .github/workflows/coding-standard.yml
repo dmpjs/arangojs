@@ -17,7 +17,7 @@ jobs:
         os: [ubuntu-latest]
         deno: ["1.2.0"]
 
-    name: "Deno ${{ matrix.deno }} lint"
+    name: "Deno ${{ matrix.deno }} lint on ${{ matrix.operating-system }} OS"
 
     runs-on: ${{ matrix.os }}
 
@@ -34,5 +34,20 @@ jobs:
       - name: "Deno Version"
         run: deno --version
 
+      - name: "check code format"
+        run: |
+          deno fmt --check -q ./src
+          deno fmt --check -q ./tests
+          deno fmt --check -q ./mod
+          deno fmt --check -q ./deps.ts
+          deno fmt --check -q ./test.ts
+          deno fmt --check -q ./test_deps.ts
+
       - name: "lint code"
-        run: deno test ./test.ts
+        run: |
+          deno lint --unstable -q ./src
+          deno lint --unstable -q ./tests
+          deno lint --unstable -q ./mod
+          deno lint --unstable -q ./deps.ts
+          deno lint --unstable -q ./test.ts
+          deno lint --unstable -q ./test_deps.ts
