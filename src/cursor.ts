@@ -110,8 +110,9 @@ export class BatchedArrayCursor<T = any> {
     host?: number,
     allowDirtyRead?: boolean,
   ) {
-    const initialBatch = new LinkedList(body.result);
-    const batches = new LinkedList([initialBatch]);
+    const batches = new LinkedList(
+      body.result.length ? [new LinkedList(body.result)] : []
+    );
 
     this._db = db;
     this._batches = batches;
@@ -127,11 +128,11 @@ export class BatchedArrayCursor<T = any> {
       },
       more: () => this._more(),
       shift: () => {
-        let batch = batches.first?.value;
+        let batch = batches.head?.value;
 
         while (batch && !batch.length) {
           batches.shift();
-          batch = batches.first?.value;
+          batch = batches.head?.value;
         }
 
         if (!batch) {
